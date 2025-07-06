@@ -3,7 +3,7 @@ package com.gym.crm.dao.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.util.HibernateUtil;
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -17,7 +17,7 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public Trainee create(Trainee trainee) {
-        return HibernateUtil.performReturningWithinSession(entityManager -> {
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
             entityManager.persist(trainee);
 
             log.info("Created Trainee with ID: {}", trainee.getId());
@@ -28,7 +28,7 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public Optional<Trainee> findById(Long id) {
-        return HibernateUtil.performReturningWithinSession(entityManager -> {
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
             Trainee trainee = entityManager.find(Trainee.class, id);
 
             log.debug("Found trainee with ID: {}", id);
@@ -39,7 +39,7 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public List<Trainee> findAll() {
-        return HibernateUtil.performReturningWithinSession(entityManager -> {
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
             List<Trainee> trainees = entityManager.createQuery("FROM Trainee", Trainee.class)
                     .getResultList();
 
@@ -51,7 +51,7 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public Trainee update(Trainee trainee) {
-        return HibernateUtil.performReturningWithinSession(entityManager -> {
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
             Trainee existingTrainee = entityManager.find(Trainee.class, trainee.getId());
             if (existingTrainee == null) {
                 throw new DaoException("Trainee not found with ID: " + trainee.getId());
@@ -67,7 +67,7 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public boolean delete(Long id) {
-        return HibernateUtil.performReturningWithinSession(entityManager -> {
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
             Trainee trainee = entityManager.find(Trainee.class, id);
 
             if (trainee != null) {

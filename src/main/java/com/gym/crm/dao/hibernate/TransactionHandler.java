@@ -1,6 +1,6 @@
-package com.gym.crm.util;
+package com.gym.crm.dao.hibernate;
 
-import com.gym.crm.exception.HibernateUtilException;
+import com.gym.crm.exception.TransactionHandlerException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 import java.util.function.Function;
 
 @Component
-public class HibernateUtil {
+public class TransactionHandler {
     private static SessionFactory sessionFactory;
 
     @Autowired
-    public HibernateUtil(SessionFactory sessionFactory) {
-        HibernateUtil.sessionFactory = sessionFactory;
+    public TransactionHandler(SessionFactory sessionFactory) {
+        TransactionHandler.sessionFactory = sessionFactory;
     }
 
     public static <T> T performReturningWithinSession(Function<Session, T> sessionFunction) {
@@ -26,7 +26,7 @@ public class HibernateUtil {
             return result;
         } catch (Exception e) {
             session.getTransaction().rollback();
-            throw new HibernateUtilException("Error performing Hibernate operation. Transaction is rolled back", e);
+            throw new TransactionHandlerException("Error performing Hibernate operation. Transaction is rolled back", e);
         } finally {
             session.close();
         }
