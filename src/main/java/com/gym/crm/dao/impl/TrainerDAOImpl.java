@@ -3,76 +3,65 @@ package com.gym.crm.dao.impl;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainer;
-import com.gym.crm.storage.InMemoryStorage;
-import com.gym.crm.storage.TrainerStorage;
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Repository
 public class TrainerDAOImpl implements TrainerDAO {
     private static final Logger log = LoggerFactory.getLogger(TrainerDAOImpl.class);
 
-    private TrainerStorage trainerStorage;
-
-    @Autowired
-    public void setStorage(InMemoryStorage inMemoryStorage) {
-        this.trainerStorage = inMemoryStorage.getTrainerStorage();
-    }
-
     @Override
     public Trainer create(Trainer trainer) {
-        Long id = trainerStorage.getNextId();
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
+            entityManager.persist(trainer);
 
-        Trainer created = trainer.toBuilder()
-                .id(id)
-                .build();
+            log.info("Created Trainer with ID: {}", trainer.getId());
 
-        Map<Long, Trainer> trainers = trainerStorage.getTrainers();
-        trainers.put(id, created);
-
-        log.info("Created Trainer with ID: {}", id);
-
-        return created;
+            return trainer;
+        });
     }
 
     @Override
     public Optional<Trainer> findById(Long id) {
-        Map<Long, Trainer> trainers = trainerStorage.getTrainers();
-        Trainer trainer = trainers.get(id);
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
+            Trainer trainer = entityManager.find(Trainer.class, id);
 
-        log.debug("Trainer found with ID: {}", id);
+            log.debug("Trainer found with ID: {}", id);
 
-        return Optional.ofNullable(trainer);
+            return Optional.ofNullable(trainer);
+        });
     }
 
     @Override
     public List<Trainer> findAll() {
-        Map<Long, Trainer> trainers = trainerStorage.getTrainers();
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
+            List<Trainer> trainers = entityManager.createQuery("FROM Trainer", Trainer.class)
+                    .getResultList();
 
-        log.debug("Retrieved all trainers. Count: {}", trainers.size());
+            log.debug("Retrieved all trainers. Count: {}", trainers.size());
 
-        return trainers.values().stream()
-                .toList();
+            return trainers;
+        });
     }
 
     @Override
     public Trainer update(Trainer trainer) {
-        Map<Long, Trainer> trainers = trainerStorage.getTrainers();
+        return TransactionHandler.performReturningWithinSession(entityManager -> {
+            Trainer existingTrainer = entityManager.find(Trainer.class, trainer.getId());
+            if (existingTrainer == null) {
+                throw new DaoException("Trainer not found with ID: " + trainer.getId());
+            }
 
-        if (!trainers.containsKey(trainer.getId())) {
-            throw new DaoException("Trainer not found with ID: " + trainer.getId());
-        }
+            Trainer updatedTrainer = entityManager.merge(trainer);
 
-        trainers.put(trainer.getId(), trainer);
+            log.info("Trainer updated with ID: {}", trainer.getId());
 
-        log.info("Trainer updated with ID: {}", trainer.getId());
-
-        return trainer;
+            return updatedTrainer;
+        });
     }
 }

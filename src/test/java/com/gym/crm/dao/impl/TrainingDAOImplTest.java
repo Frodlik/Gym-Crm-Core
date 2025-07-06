@@ -1,35 +1,40 @@
 package com.gym.crm.dao.impl;
 
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.storage.InMemoryStorage;
-import com.gym.crm.storage.TrainingStorage;
-import org.junit.jupiter.api.BeforeEach;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingDAOImplTest {
+    private static final Long TRAINING_ID = 1L;
     private static final Long TRAINEE_ID = 1L;
     private static final Long TRAINER_ID = 2L;
     private static final String TRAINING_NAME = "Morning Yoga Session";
@@ -38,37 +43,32 @@ class TrainingDAOImplTest {
     private static final int DURATION = 60;
 
     @Mock
-    private InMemoryStorage inMemoryStorage;
+    private SessionFactory sessionFactory;
     @Mock
-    private TrainingStorage trainingStorage;
+    private Session session;
+    @Mock
+    private Transaction transaction;
+    @Mock
+    private Query<Training> query;
     @InjectMocks
     private TrainingDAOImpl dao;
 
-    @BeforeEach
-    void setUp() {
-        when(inMemoryStorage.getTrainingStorage()).thenReturn(trainingStorage);
-        dao.setStorage(inMemoryStorage);
-    }
-
     @Test
-    void testCreate_ShouldCreateTrainingWithGeneratedId() {
+    void testCreate_ShouldCreateTraining() {
         Training training = createTraining(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE, TRAINING_DATE, DURATION);
 
-        when(trainingStorage.getNextId()).thenReturn(1L);
-        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Training> function = invocation.getArgument(0);
+                        return function.apply(session);
+                    });
 
-        Training actual = dao.create(training);
+            Training result = dao.create(training);
 
-        assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getTrainee().getId());
-        assertEquals(TRAINER_ID, actual.getTrainer().getId());
-        assertEquals(TRAINING_NAME, actual.getTrainingName());
-        assertEquals(TRAINING_TYPE, actual.getTrainingType());
-        assertEquals(TRAINING_DATE, actual.getTrainingDate());
-        assertEquals(DURATION, actual.getTrainingDuration());
-
-        verify(trainingStorage).getNextId();
-        verify(trainingStorage).getTrainings();
+            assertEquals(training, result);
+            verify(session).persist(training);
+        }
     }
 
     @Test
@@ -76,105 +76,126 @@ class TrainingDAOImplTest {
         Training training = createTraining(3L, 4L, "General Training", null,
                 LocalDate.of(2024, 2, 20), 90);
 
-        when(trainingStorage.getNextId()).thenReturn(2L);
-        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Training> function = invocation.getArgument(0);
+                        return function.apply(session);
+                    });
 
-        Training actual = dao.create(training);
+            Training result = dao.create(training);
 
-        assertNotNull(actual);
-        assertEquals(3L, actual.getTrainee().getId());
-        assertEquals(4L, actual.getTrainer().getId());
-        assertEquals("General Training", actual.getTrainingName());
-        assertNull(actual.getTrainingType());
-        assertEquals(LocalDate.of(2024, 2, 20), actual.getTrainingDate());
-        assertEquals(90, actual.getTrainingDuration());
+            assertEquals(training, result);
+            verify(session).persist(training);
+            assertNull(training.getTrainingType());
+        }
     }
 
     @Test
     void testFindById_ShouldReturnTrainingWhenExists() {
-        Long id = 1L;
         Training expected = createSampleTraining();
-        Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
-        trainingsMap.put(id, expected);
 
-        when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Optional<Training>> function = invocation.getArgument(0);
+                        when(session.find(Training.class, TRAINING_ID)).thenReturn(expected);
+                        return function.apply(session);
+                    });
 
-        Optional<Training> actual = dao.findById(id);
+            Optional<Training> actual = dao.findById(TRAINING_ID);
 
-        assertTrue(actual.isPresent());
-        assertEquals(expected, actual.get());
-        verify(trainingStorage).getTrainings();
+            assertTrue(actual.isPresent());
+            assertEquals(expected, actual.get());
+            verify(session).find(Training.class, TRAINING_ID);
+        }
     }
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
-        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
+        Long id = 999L;
 
-        Optional<Training> actual = dao.findById(999L);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Optional<Training>> function = invocation.getArgument(0);
+                        when(session.find(Training.class, id)).thenReturn(null);
+                        return function.apply(session);
+                    });
 
-        assertFalse(actual.isPresent());
-        verify(trainingStorage).getTrainings();
+            Optional<Training> actual = dao.findById(id);
+
+            assertFalse(actual.isPresent());
+            verify(session).find(Training.class, id);
+        }
     }
 
     @Test
     void testFindAll_ShouldReturnAllTrainings() {
         Training training1 = createSampleTraining();
-        Training training2 = createTraining(3L, 4L, "Evening Pilates", TrainingType.builder().trainingTypeName("Pilates").build(),
-                TRAINING_DATE, 75);
+        Training training2 = createTraining(3L, 4L, "Evening Pilates",
+                TrainingType.builder().trainingTypeName("Pilates").build(), TRAINING_DATE, 75);
+        List<Training> expectedList = Arrays.asList(training1, training2);
 
-        Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
-        trainingsMap.put(1L, training1);
-        trainingsMap.put(2L, training2);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, List<Training>> function = invocation.getArgument(0);
+                        when(session.createQuery("FROM Training", Training.class)).thenReturn(query);
+                        when(query.getResultList()).thenReturn(expectedList);
+                        return function.apply(session);
+                    });
 
-        when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
+            List<Training> actual = dao.findAll();
 
-        List<Training> actual = dao.findAll();
-
-        assertEquals(2, actual.size());
-        assertTrue(actual.contains(training1));
-        assertTrue(actual.contains(training2));
-        verify(trainingStorage).getTrainings();
+            assertEquals(2, actual.size());
+            assertTrue(actual.contains(training1));
+            assertTrue(actual.contains(training2));
+            verify(session).createQuery("FROM Training", Training.class);
+            verify(query).getResultList();
+        }
     }
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainings() {
-        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, List<Training>> function = invocation.getArgument(0);
+                        when(session.createQuery("FROM Training", Training.class)).thenReturn(query);
+                        when(query.getResultList()).thenReturn(Collections.emptyList());
+                        return function.apply(session);
+                    });
 
-        List<Training> actual = dao.findAll();
+            List<Training> actual = dao.findAll();
 
-        assertTrue(actual.isEmpty());
-        verify(trainingStorage).getTrainings();
+            assertTrue(actual.isEmpty());
+            verify(session).createQuery("FROM Training", Training.class);
+            verify(query).getResultList();
+        }
     }
 
     @Test
     void testCreate_ShouldHandleTrainingWithMinimalData() {
         LocalDate today = LocalDate.now();
-        Training expected = createTraining(5L, 6L, "Quick Session", null, today, 30);
+        Training training = createTraining(5L, 6L, "Quick Session", null, today, 30);
 
-        when(trainingStorage.getNextId()).thenReturn(3L);
-        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Training> function = invocation.getArgument(0);
+                        return function.apply(session);
+                    });
 
-        Training actual = dao.create(expected);
+            Training result = dao.create(training);
 
-        assertNotNull(actual);
-        assertEquals(expected.getTrainee().getId(), actual.getTrainee().getId());
-        assertEquals(expected.getTrainer().getId(), actual.getTrainer().getId());
-        assertEquals(expected.getTrainingName(), actual.getTrainingName());
-        assertEquals(today, actual.getTrainingDate());
-        assertEquals(expected.getTrainingDuration(), actual.getTrainingDuration());
-        assertNull(actual.getTrainingType());
-    }
-
-    @Test
-    void testSetStorage_ShouldInitializeTrainingStorage() {
-        InMemoryStorage newStorage = mock(InMemoryStorage.class);
-        TrainingStorage newTrainingStorage = mock(TrainingStorage.class);
-
-        when(newStorage.getTrainingStorage()).thenReturn(newTrainingStorage);
-
-        dao.setStorage(newStorage);
-
-        verify(newStorage).getTrainingStorage();
+            assertEquals(training, result);
+            verify(session).persist(training);
+            assertEquals("Quick Session", training.getTrainingName());
+            assertEquals(today, training.getTrainingDate());
+            assertEquals(30, training.getTrainingDuration());
+            assertNull(training.getTrainingType());
+        }
     }
 
     private Training createSampleTraining() {
