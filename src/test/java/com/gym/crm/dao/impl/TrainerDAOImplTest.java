@@ -1,23 +1,26 @@
 package com.gym.crm.dao.impl;
 
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,58 +47,87 @@ class TrainerDAOImplTest {
     @Mock
     private Session session;
     @Mock
+    private Transaction transaction;
+    @Mock
     private Query<Trainer> query;
     @InjectMocks
     private TrainerDAOImpl dao;
-
-    @BeforeEach
-    void setUp() {
-        when(sessionFactory.getCurrentSession()).thenReturn(session);
-    }
 
     @Test
     void testCreate_ShouldCreateTrainer() {
         Trainer trainer = createTrainer();
 
-        dao.create(trainer);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Trainer> function = invocation.getArgument(0);
+                        return function.apply(session);
+                    });
 
-        verify(session).persist(trainer);
+            Trainer result = dao.create(trainer);
+
+            assertEquals(trainer, result);
+            verify(session).persist(trainer);
+        }
     }
 
     @Test
     void testCreate_ShouldCreateTrainerWithNullSpecialization() {
         Trainer trainer = createTrainer(null, false);
 
-        dao.create(trainer);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Trainer> function = invocation.getArgument(0);
+                        return function.apply(session);
+                    });
 
-        verify(session).persist(trainer);
-        assertNull(trainer.getSpecialization());
-        assertFalse(trainer.getUser().getIsActive());
+            Trainer result = dao.create(trainer);
+
+            assertEquals(trainer, result);
+            verify(session).persist(trainer);
+            assertNull(trainer.getSpecialization());
+            assertFalse(trainer.getUser().getIsActive());
+        }
     }
 
     @Test
     void testFindById_ShouldReturnTrainerWhenExists() {
         Trainer expected = createTrainerWithId(TRAINER_ID);
 
-        when(session.get(Trainer.class, TRAINER_ID)).thenReturn(expected);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Optional<Trainer>> function = invocation.getArgument(0);
+                        when(session.find(Trainer.class, TRAINER_ID)).thenReturn(expected);
+                        return function.apply(session);
+                    });
 
-        Optional<Trainer> actual = dao.findById(TRAINER_ID);
+            Optional<Trainer> actual = dao.findById(TRAINER_ID);
 
-        assertTrue(actual.isPresent());
-        assertEquals(expected, actual.get());
-        verify(session).get(Trainer.class, TRAINER_ID);
+            assertTrue(actual.isPresent());
+            assertEquals(expected, actual.get());
+            verify(session).find(Trainer.class, TRAINER_ID);
+        }
     }
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         Long id = 999L;
 
-        when(session.get(Trainer.class, id)).thenReturn(null);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Optional<Trainer>> function = invocation.getArgument(0);
+                        when(session.find(Trainer.class, id)).thenReturn(null);
+                        return function.apply(session);
+                    });
 
-        Optional<Trainer> actual = dao.findById(id);
+            Optional<Trainer> actual = dao.findById(id);
 
-        assertFalse(actual.isPresent());
-        verify(session).get(Trainer.class, id);
+            assertFalse(actual.isPresent());
+            verify(session).find(Trainer.class, id);
+        }
     }
 
     @Test
@@ -103,28 +136,42 @@ class TrainerDAOImplTest {
         Trainer trainer2 = createTrainerWithId(2L);
         List<Trainer> expectedList = Arrays.asList(trainer1, trainer2);
 
-        when(session.createQuery("FROM Trainer", Trainer.class)).thenReturn(query);
-        when(query.getResultList()).thenReturn(expectedList);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, List<Trainer>> function = invocation.getArgument(0);
+                        when(session.createQuery("FROM Trainer", Trainer.class)).thenReturn(query);
+                        when(query.getResultList()).thenReturn(expectedList);
+                        return function.apply(session);
+                    });
 
-        List<Trainer> actual = dao.findAll();
+            List<Trainer> actual = dao.findAll();
 
-        assertEquals(2, actual.size());
-        assertTrue(actual.contains(trainer1));
-        assertTrue(actual.contains(trainer2));
-        verify(session).createQuery("FROM Trainer", Trainer.class);
-        verify(query).getResultList();
+            assertEquals(2, actual.size());
+            assertTrue(actual.contains(trainer1));
+            assertTrue(actual.contains(trainer2));
+            verify(session).createQuery("FROM Trainer", Trainer.class);
+            verify(query).getResultList();
+        }
     }
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainers() {
-        when(session.createQuery("FROM Trainer", Trainer.class)).thenReturn(query);
-        when(query.getResultList()).thenReturn(Collections.emptyList());
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, List<Trainer>> function = invocation.getArgument(0);
+                        when(session.createQuery("FROM Trainer", Trainer.class)).thenReturn(query);
+                        when(query.getResultList()).thenReturn(Collections.emptyList());
+                        return function.apply(session);
+                    });
 
-        List<Trainer> actual = dao.findAll();
+            List<Trainer> actual = dao.findAll();
 
-        assertTrue(actual.isEmpty());
-        verify(session).createQuery("FROM Trainer", Trainer.class);
-        verify(query).getResultList();
+            assertTrue(actual.isEmpty());
+            verify(session).createQuery("FROM Trainer", Trainer.class);
+            verify(query).getResultList();
+        }
     }
 
     @Test
@@ -139,26 +186,41 @@ class TrainerDAOImplTest {
                 .specialization(TrainingType.builder().trainingTypeName("Pilates").build())
                 .build();
 
-        when(session.get(Trainer.class, TRAINER_ID)).thenReturn(existingTrainer);
-        when(session.merge(updatedTrainer)).thenReturn(updatedTrainer);
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Trainer> function = invocation.getArgument(0);
+                        when(session.find(Trainer.class, TRAINER_ID)).thenReturn(existingTrainer);
+                        when(session.merge(updatedTrainer)).thenReturn(updatedTrainer);
+                        return function.apply(session);
+                    });
 
-        Trainer actual = dao.update(updatedTrainer);
+            Trainer actual = dao.update(updatedTrainer);
 
-        assertEquals(updatedTrainer, actual);
-        verify(session).get(Trainer.class, TRAINER_ID);
-        verify(session).merge(updatedTrainer);
+            assertEquals(updatedTrainer, actual);
+            verify(session).find(Trainer.class, TRAINER_ID);
+            verify(session).merge(updatedTrainer);
+        }
     }
 
     @Test
     void testUpdate_ShouldThrowExceptionWhenTrainerNotExists() {
         Trainer trainer = createTrainerWithId(999L);
-        when(session.get(Trainer.class, 999L)).thenReturn(null);
 
-        DaoException exception = assertThrows(DaoException.class, () -> dao.update(trainer));
+        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
+            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
+                    .thenAnswer(invocation -> {
+                        Function<Session, Trainer> function = invocation.getArgument(0);
+                        when(session.find(Trainer.class, 999L)).thenReturn(null);
+                        return function.apply(session);
+                    });
 
-        assertEquals("Trainer not found with ID: 999", exception.getMessage());
-        verify(session).get(Trainer.class, 999L);
-        verify(session, never()).merge(any());
+            DaoException exception = assertThrows(DaoException.class, () -> dao.update(trainer));
+
+            assertEquals("Trainer not found with ID: 999", exception.getMessage());
+            verify(session).find(Trainer.class, 999L);
+            verify(session, never()).merge(any());
+        }
     }
 
     private Trainer createTrainer() {
@@ -188,4 +250,5 @@ class TrainerDAOImplTest {
                 .id(id)
                 .build();
     }
+
 }
