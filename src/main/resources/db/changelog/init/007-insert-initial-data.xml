@@ -10,31 +10,19 @@
             <column name="training_type_name" value="Cardio"/>
         </insert>
         <insert tableName="training_types">
-            <column name="training_type_name" value="Strength Training"/>
+            <column name="training_type_name" value="Strength"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Flexibility"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="HIIT"/>
         </insert>
         <insert tableName="training_types">
             <column name="training_type_name" value="Yoga"/>
         </insert>
         <insert tableName="training_types">
             <column name="training_type_name" value="Pilates"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="CrossFit"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Swimming"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Boxing"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Dance"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Personal Training"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Martial Arts"/>
         </insert>
 
         <insert tableName="users">
@@ -245,6 +233,7 @@
             <column name="trainer_id" value="3"/>
             <column name="training_type_id" value="1"/>
         </insert>
+
     </changeSet>
 
 </databaseChangeLog>

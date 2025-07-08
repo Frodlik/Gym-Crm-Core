@@ -19,6 +19,10 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -27,8 +31,10 @@ import java.sql.Connection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@ExtendWith(SpringExtension.class)
 @Testcontainers
-public abstract class BaseIntegrationTest {
+@ComponentScan(basePackages = "com.gym.crm.dao.impl")
+public abstract class BaseIntegrationTest<R> {
     private static final String DB_NAME = "gym_crm_test";
     private static final String USER = "test";
     private static final String PASSWORD = "test";
@@ -40,6 +46,10 @@ public abstract class BaseIntegrationTest {
             .withPassword(PASSWORD);
 
     protected static SessionFactory sessionFactory;
+
+    @Autowired
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    protected R dao;
 
     @BeforeEach
     void cleanDatabase() {

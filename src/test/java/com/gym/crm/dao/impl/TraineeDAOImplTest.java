@@ -1,12 +1,11 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,19 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TraineeDAOImplTest extends BaseIntegrationTest {
-    private TraineeDAO traineeDAO;
-
-    @BeforeAll
-    void initDAO() {
-        traineeDAO = new TraineeDAOImpl();
-    }
-
+@ContextConfiguration(classes = {TraineeDAOImpl.class})
+class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     @Test
     void testCreate_ShouldPersistTraineeSuccessfully() {
         Trainee trainee = createSampleTrainee();
 
-        Trainee savedTrainee = traineeDAO.create(trainee);
+        Trainee savedTrainee = dao.create(trainee);
 
         assertNotNull(savedTrainee);
         assertNotNull(savedTrainee.getId());
@@ -61,7 +54,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
                 .address(null)
                 .build();
 
-        Trainee savedTrainee = traineeDAO.create(trainee);
+        Trainee savedTrainee = dao.create(trainee);
 
         assertNotNull(savedTrainee);
         assertNotNull(savedTrainee.getId());
@@ -72,9 +65,9 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
     @Test
     void testFindById_ShouldReturnTraineeWhenExists() {
         Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = traineeDAO.create(trainee);
+        Trainee savedTrainee = dao.create(trainee);
 
-        Optional<Trainee> foundTrainee = traineeDAO.findById(savedTrainee.getId());
+        Optional<Trainee> foundTrainee = dao.findById(savedTrainee.getId());
 
         assertTrue(foundTrainee.isPresent());
         assertEquals(savedTrainee.getId(), foundTrainee.get().getId());
@@ -88,7 +81,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         Long nonExistentId = 999L;
 
-        Optional<Trainee> foundTrainee = traineeDAO.findById(nonExistentId);
+        Optional<Trainee> foundTrainee = dao.findById(nonExistentId);
 
         assertFalse(foundTrainee.isPresent());
     }
@@ -99,10 +92,10 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
         Trainee trainee2 = createSampleTraineeWithDetails("Smith", "jane.doe",
                 LocalDate.of(1985, 5, 15), "456 Oak Ave");
 
-        traineeDAO.create(trainee1);
-        traineeDAO.create(trainee2);
+        dao.create(trainee1);
+        dao.create(trainee2);
 
-        List<Trainee> allTrainees = traineeDAO.findAll();
+        List<Trainee> allTrainees = dao.findAll();
 
         assertNotNull(allTrainees);
         assertEquals(2, allTrainees.size());
@@ -115,7 +108,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
-        List<Trainee> allTrainees = traineeDAO.findAll();
+        List<Trainee> allTrainees = dao.findAll();
 
         assertNotNull(allTrainees);
         assertTrue(allTrainees.isEmpty());
@@ -124,7 +117,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
     @Test
     void testUpdate_ShouldUpdateExistingTrainee() {
         Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = traineeDAO.create(trainee);
+        Trainee savedTrainee = dao.create(trainee);
 
         User updatedUser = savedTrainee.getUser().toBuilder()
                 .firstName("John Updated")
@@ -137,7 +130,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
                 .dateOfBirth(LocalDate.of(1985, 12, 25))
                 .build();
 
-        Trainee result = traineeDAO.update(updatedTrainee);
+        Trainee result = dao.update(updatedTrainee);
 
         assertNotNull(result);
         assertEquals(savedTrainee.getId(), result.getId());
@@ -146,7 +139,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
         assertEquals("456 Oak Ave", result.getAddress());
         assertEquals(LocalDate.of(1985, 12, 25), result.getDateOfBirth());
 
-        Optional<Trainee> persistedTrainee = traineeDAO.findById(savedTrainee.getId());
+        Optional<Trainee> persistedTrainee = dao.findById(savedTrainee.getId());
         assertTrue(persistedTrainee.isPresent());
         assertEquals("John Updated", persistedTrainee.get().getUser().getFirstName());
         assertFalse(persistedTrainee.get().getUser().getIsActive());
@@ -171,7 +164,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
                 .build();
 
         TransactionHandlerException exception = assertThrows(TransactionHandlerException.class,
-                () -> traineeDAO.update(nonExistentTrainee));
+                () -> dao.update(nonExistentTrainee));
 
         assertEquals("Error performing Hibernate operation. Transaction is rolled back", exception.getMessage());
     }
@@ -179,13 +172,13 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
     @Test
     void testDelete_ShouldReturnTrueWhenTraineeExists() {
         Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = traineeDAO.create(trainee);
+        Trainee savedTrainee = dao.create(trainee);
 
-        boolean result = traineeDAO.delete(savedTrainee.getId());
+        boolean result = dao.delete(savedTrainee.getId());
 
         assertTrue(result);
 
-        Optional<Trainee> deletedTrainee = traineeDAO.findById(savedTrainee.getId());
+        Optional<Trainee> deletedTrainee = dao.findById(savedTrainee.getId());
         assertFalse(deletedTrainee.isPresent());
     }
 
@@ -193,7 +186,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
     void testDelete_ShouldReturnFalseWhenTraineeNotExists() {
         Long nonExistentId = 999L;
 
-        boolean result = traineeDAO.delete(nonExistentId);
+        boolean result = dao.delete(nonExistentId);
 
         assertFalse(result);
     }
@@ -204,20 +197,20 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
         Trainee trainee2 = createSampleTraineeWithDetails("Doe", "user2",
                 LocalDate.of(1990, 1, 1), "123 Main St");
 
-        Trainee saved1 = traineeDAO.create(trainee1);
-        Trainee saved2 = traineeDAO.create(trainee2);
+        Trainee saved1 = dao.create(trainee1);
+        Trainee saved2 = dao.create(trainee2);
 
         User updatedUser = saved1.getUser().toBuilder()
                 .firstName("John Updated")
                 .build();
 
-        traineeDAO.update(saved1.toBuilder()
+        dao.update(saved1.toBuilder()
                 .user(updatedUser)
                 .build());
 
-        boolean deleted = traineeDAO.delete(saved2.getId());
+        boolean deleted = dao.delete(saved2.getId());
 
-        List<Trainee> allTrainees = traineeDAO.findAll();
+        List<Trainee> allTrainees = dao.findAll();
         assertEquals(1, allTrainees.size());
         assertEquals("John Updated", allTrainees.getFirst().getUser().getFirstName());
         assertEquals("user1", allTrainees.getFirst().getUser().getUsername());
@@ -229,9 +222,9 @@ class TraineeDAOImplTest extends BaseIntegrationTest {
         Trainee trainee1 = createSampleTraineeWithUsername("duplicate.user");
         Trainee trainee2 = createSampleTraineeWithUsername("duplicate.user");
 
-        traineeDAO.create(trainee1);
+        dao.create(trainee1);
 
-        assertThrows(Exception.class, () -> traineeDAO.create(trainee2));
+        assertThrows(Exception.class, () -> dao.create(trainee2));
     }
 
     private Trainee createSampleTrainee() {

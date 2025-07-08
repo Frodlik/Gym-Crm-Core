@@ -1,14 +1,13 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.TrainingDAO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,19 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TrainingDAOImplTest extends BaseIntegrationTest {
-    private TrainingDAO trainingDAO;
-
-    @BeforeAll
-    void initDAO() {
-        trainingDAO = new TrainingDAOImpl();
-    }
-
+@ContextConfiguration(classes = {TrainingDAOImpl.class})
+class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
     @Test
     void testCreate_ShouldCreateTraining() {
         Training training = createTraining("Morning Yoga Session", "Yoga", 60);
 
-        Training result = trainingDAO.create(training);
+        Training result = dao.create(training);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -55,7 +48,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
     void testCreate_ShouldCreateTrainingWithNotNullTrainingType() {
         Training training = createTraining("General Training", "Flexibility", 90);
 
-        Training result = trainingDAO.create(training);
+        Training result = dao.create(training);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -67,9 +60,9 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
     @Test
     void testFindById_ShouldReturnTrainingWhenExists() {
         Training training = createTraining("Morning Cardio", "Cardio", 45);
-        Training saved = trainingDAO.create(training);
+        Training saved = dao.create(training);
 
-        Optional<Training> found = trainingDAO.findById(saved.getId());
+        Optional<Training> found = dao.findById(saved.getId());
 
         assertTrue(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
@@ -87,7 +80,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Optional<Training> found = trainingDAO.findById(999L);
+        Optional<Training> found = dao.findById(999L);
         assertFalse(found.isPresent());
     }
 
@@ -96,10 +89,10 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
         Training training1 = createTraining("Morning Yoga", "Yoga", 60);
         Training training2 = createTraining("Evening Pilates", "Pilates", 75);
 
-        trainingDAO.create(training1);
-        trainingDAO.create(training2);
+        dao.create(training1);
+        dao.create(training2);
 
-        List<Training> list = trainingDAO.findAll();
+        List<Training> list = dao.findAll();
 
         assertNotNull(list);
         assertEquals(2, list.size());
@@ -107,7 +100,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainings() {
-        List<Training> list = trainingDAO.findAll();
+        List<Training> list = dao.findAll();
 
         assertNotNull(list);
         assertTrue(list.isEmpty());
@@ -118,7 +111,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest {
         LocalDate today = LocalDate.now();
         Training training = createTrainingWithMinimalData(today);
 
-        Training result = trainingDAO.create(training);
+        Training result = dao.create(training);
 
         assertNotNull(result);
         assertNotNull(result.getId());

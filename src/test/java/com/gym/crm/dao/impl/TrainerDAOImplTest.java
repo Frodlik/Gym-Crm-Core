@@ -1,13 +1,12 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,19 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TrainerDAOImplTest extends BaseIntegrationTest {
-    private TrainerDAO trainerDAO;
-
-    @BeforeAll
-    void initDAO() {
-        trainerDAO = new TrainerDAOImpl();
-    }
-
+@ContextConfiguration(classes = {TrainerDAOImpl.class})
+class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
     @Test
     void testCreate_ShouldCreateTrainer() {
         Trainer trainer = createTrainer("Yoga", true);
 
-        Trainer result = trainerDAO.create(trainer);
+        Trainer result = dao.create(trainer);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -54,7 +47,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
     void testCreate_ShouldCreateTrainerWithDefaultSpecialization() {
         Trainer trainer = createTrainer("Cardio", false);
 
-        Trainer result = trainerDAO.create(trainer);
+        Trainer result = dao.create(trainer);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -74,7 +67,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
     void testCreate_ShouldCreateTrainerWithNotNullSpecialization() {
         Trainer trainer = createTrainer("HIIT", false);
 
-        Trainer result = trainerDAO.create(trainer);
+        Trainer result = dao.create(trainer);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -85,9 +78,9 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
     @Test
     void testFindById_ShouldReturnTrainerWhenExists() {
         Trainer trainer = createTrainer("Cardio", true);
-        Trainer saved = trainerDAO.create(trainer);
+        Trainer saved = dao.create(trainer);
 
-        Optional<Trainer> found = trainerDAO.findById(saved.getId());
+        Optional<Trainer> found = dao.findById(saved.getId());
 
         assertTrue(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
@@ -103,7 +96,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Optional<Trainer> found = trainerDAO.findById(999L);
+        Optional<Trainer> found = dao.findById(999L);
         assertFalse(found.isPresent());
     }
 
@@ -123,10 +116,10 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
                 .build();
 
         Trainer t2 = createTrainer("Strength", true);
-        trainerDAO.create(t1);
-        trainerDAO.create(t2);
+        dao.create(t1);
+        dao.create(t2);
 
-        List<Trainer> list = trainerDAO.findAll();
+        List<Trainer> list = dao.findAll();
 
         assertNotNull(list);
         assertEquals(2, list.size());
@@ -134,7 +127,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainers() {
-        List<Trainer> list = trainerDAO.findAll();
+        List<Trainer> list = dao.findAll();
 
         assertNotNull(list);
         assertTrue(list.isEmpty());
@@ -143,7 +136,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
     @Test
     void testUpdate_ShouldUpdateExistingTrainer() {
         Trainer trainer = createTrainer("Strength", true);
-        Trainer saved = trainerDAO.create(trainer);
+        Trainer saved = dao.create(trainer);
 
         TrainingType hiitType = getExistingTrainingType("HIIT");
 
@@ -157,7 +150,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
                 .specialization(hiitType)
                 .build();
 
-        Trainer result = trainerDAO.update(updatedTrainer);
+        Trainer result = dao.update(updatedTrainer);
 
         assertNotNull(result);
         assertEquals("Jane Updated", result.getUser().getFirstName());
@@ -187,7 +180,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest {
                 .specialization(null)
                 .build();
 
-        TransactionHandlerException exception = assertThrows(TransactionHandlerException.class, () -> trainerDAO.update(ghost));
+        TransactionHandlerException exception = assertThrows(TransactionHandlerException.class, () -> dao.update(ghost));
         assertEquals("Error performing Hibernate operation. Transaction is rolled back", exception.getMessage());
     }
 
