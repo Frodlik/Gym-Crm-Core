@@ -6,34 +6,75 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
+import com.mysql.cj.jdbc.MysqlDataSource;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.sql.Connection;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Testcontainers
 public abstract class BaseIntegrationTest {
     private static final String DB_NAME = "gym_crm_test";
     private static final String USER = "test";
     private static final String PASSWORD = "test";
-    private static final String INIT_SCRIPT = "init-test-db.sql";
 
     @Container
     protected static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName(DB_NAME)
             .withUsername(USER)
-            .withPassword(PASSWORD)
-            .withInitScript(INIT_SCRIPT);
+            .withPassword(PASSWORD);
 
     protected static SessionFactory sessionFactory;
 
+    @BeforeEach
+    void cleanDatabase() {
+        doInSession(session -> {
+            session.createMutationQuery("DELETE FROM Training ").executeUpdate();
+            session.createMutationQuery("DELETE FROM Trainer ").executeUpdate();
+            session.createMutationQuery("DELETE FROM Trainee ").executeUpdate();
+            session.createMutationQuery("DELETE FROM User ").executeUpdate();
+        });
+    }
+
     @BeforeAll
-    static void setUpBase() {
+    static void setUpBase() throws Exception {
         mysql.start();
 
+        MysqlDataSource dataSource = new MysqlDataSource();
+        dataSource.setURL(mysql.getJdbcUrl());
+        dataSource.setUser(mysql.getUsername());
+        dataSource.setPassword(mysql.getPassword());
+
+        runLiquibaseMigrations(dataSource);
+
+        sessionFactory = buildHibernateConfiguration().buildSessionFactory();
+        new TransactionHandler(sessionFactory);
+    }
+
+    @AfterAll
+    static void tearDownBase() {
+        if (sessionFactory != null) {
+            sessionFactory.close();
+        }
+        mysql.stop();
+    }
+
+    private static Configuration buildHibernateConfiguration() {
         Configuration configuration = new Configuration();
 
         configuration.setProperty("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
@@ -42,7 +83,7 @@ public abstract class BaseIntegrationTest {
         configuration.setProperty("hibernate.connection.password", mysql.getPassword());
 
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        configuration.setProperty("hibernate.hbm2ddl.auto", "none");
         configuration.setProperty("hibernate.show_sql", "true");
         configuration.setProperty("hibernate.format_sql", "true");
         configuration.setProperty("hibernate.use_sql_comments", "true");
@@ -57,15 +98,46 @@ public abstract class BaseIntegrationTest {
         configuration.addAnnotatedClass(Training.class);
         configuration.addAnnotatedClass(TrainingType.class);
 
-        sessionFactory = configuration.buildSessionFactory();
-        new TransactionHandler(sessionFactory);
+        return configuration;
     }
 
-    @AfterAll
-    static void tearDownBase() {
-        if (sessionFactory != null) {
-            sessionFactory.close();
+    private static void runLiquibaseMigrations(MysqlDataSource dataSource) throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            Database database = DatabaseFactory.getInstance()
+                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+
+            Liquibase liquibase = new Liquibase(
+                    "db/changelog/db.changelog-master.xml",
+                    new ClassLoaderResourceAccessor(),
+                    database
+            );
+
+            liquibase.dropAll();
+            liquibase.update("test");
         }
-        mysql.stop();
+    }
+
+    protected <T> T doInSession(Function<Session, T> function) {
+        Session session = sessionFactory.openSession();
+        Transaction transaction = session.beginTransaction();
+        try {
+            T result = function.apply(session);
+            transaction.commit();
+
+            return result;
+        } catch (Exception e) {
+            transaction.rollback();
+            throw new RuntimeException("Error performing Hibernate operation. Transaction is rolled back", e);
+        } finally {
+            session.close();
+        }
+    }
+
+    protected void doInSession(Consumer<Session> consumer) {
+        doInSession(session -> {
+            consumer.accept(session);
+
+            return null;
+        });
     }
 }

@@ -1,12 +1,10 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TraineeDAO;
-import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -22,22 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TraineeDAOImplIntegrationTest extends BaseIntegrationTest {
+class TraineeDAOImplTest extends BaseIntegrationTest {
     private TraineeDAO traineeDAO;
 
     @BeforeAll
     void initDAO() {
         traineeDAO = new TraineeDAOImpl();
-    }
-
-    @BeforeEach
-    void cleanDatabase() {
-        TransactionHandler.performReturningWithinSession(session -> {
-            session.createQuery("DELETE FROM Trainee").executeUpdate();
-            session.createQuery("DELETE FROM User").executeUpdate();
-
-            return null;
-        });
     }
 
     @Test

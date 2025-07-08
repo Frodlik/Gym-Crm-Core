@@ -1,14 +1,12 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TrainingDAO;
-import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -19,28 +17,15 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
+class TrainingDAOImplTest extends BaseIntegrationTest {
     private TrainingDAO trainingDAO;
 
     @BeforeAll
     void initDAO() {
         trainingDAO = new TrainingDAOImpl();
-    }
-
-    @BeforeEach
-    void cleanDatabase() {
-        TransactionHandler.performReturningWithinSession(session -> {
-            session.createQuery("DELETE FROM Training").executeUpdate();
-            session.createQuery("DELETE FROM Trainee").executeUpdate();
-            session.createQuery("DELETE FROM Trainer").executeUpdate();
-            session.createQuery("DELETE FROM User").executeUpdate();
-
-            return null;
-        });
     }
 
     @Test
@@ -57,7 +42,7 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
         assertNotNull(result.getTrainer());
         assertNotNull(result.getTrainingType());
 
-        String trainingTypeName = TransactionHandler.performReturningWithinSession(session -> {
+        String trainingTypeName = doInSession(session -> {
             Training createdTraining = session.get(Training.class, result.getId());
 
             return createdTraining.getTrainingType().getTrainingTypeName();
@@ -67,8 +52,8 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void testCreate_ShouldCreateTrainingWithNullTrainingType() {
-        Training training = createTraining("General Training", null, 90);
+    void testCreate_ShouldCreateTrainingWithNotNullTrainingType() {
+        Training training = createTraining("General Training", "Flexibility", 90);
 
         Training result = trainingDAO.create(training);
 
@@ -76,7 +61,7 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
         assertNotNull(result.getId());
         assertEquals("General Training", result.getTrainingName());
         assertEquals(90, result.getTrainingDuration());
-        assertNull(result.getTrainingType());
+        assertEquals("Flexibility", result.getTrainingType().getTrainingTypeName());
     }
 
     @Test
@@ -91,7 +76,7 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
         assertEquals("Morning Cardio", found.get().getTrainingName());
         assertEquals(45, found.get().getTrainingDuration());
 
-        String trainingTypeName = TransactionHandler.performReturningWithinSession(session -> {
+        String trainingTypeName = doInSession(session -> {
             Training foundTraining = session.get(Training.class, found.get().getId());
 
             return foundTraining.getTrainingType().getTrainingTypeName();
@@ -131,7 +116,7 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
     @Test
     void testCreate_ShouldHandleTrainingWithMinimalData() {
         LocalDate today = LocalDate.now();
-        Training training = createTrainingWithMinimalData("Quick Session", today, 30);
+        Training training = createTrainingWithMinimalData(today);
 
         Training result = trainingDAO.create(training);
 
@@ -140,7 +125,7 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
         assertEquals("Quick Session", result.getTrainingName());
         assertEquals(today, result.getTrainingDate());
         assertEquals(30, result.getTrainingDuration());
-        assertNull(result.getTrainingType());
+        assertNotNull(result.getTrainingType());
     }
 
     private Training createTraining(String trainingName, String trainingTypeName, int duration) {
@@ -158,22 +143,23 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
                 .build();
     }
 
-    private Training createTrainingWithMinimalData(String trainingName, LocalDate date, int duration) {
+    private Training createTrainingWithMinimalData(LocalDate date) {
         Trainee trainee = saveTrainee();
         Trainer trainer = saveTrainer();
+        TrainingType defaultType = getExistingTrainingType("Cardio");
 
         return Training.builder()
                 .trainee(trainee)
                 .trainer(trainer)
-                .trainingName(trainingName)
-                .trainingType(null)
+                .trainingName("Quick Session")
+                .trainingType(defaultType)
                 .trainingDate(date)
-                .trainingDuration(duration)
+                .trainingDuration(30)
                 .build();
     }
 
     private Trainee saveTrainee() {
-        return TransactionHandler.performReturningWithinSession(session -> {
+        return doInSession(session -> {
             User user = User.builder()
                     .firstName("John")
                     .lastName("Doe")
@@ -190,12 +176,13 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
 
             session.persist(trainee);
             session.flush();
+
             return trainee;
         });
     }
 
     private Trainer saveTrainer() {
-        return TransactionHandler.performReturningWithinSession(session -> {
+        return doInSession(session -> {
             User user = User.builder()
                     .firstName("Jane")
                     .lastName("Smith")
@@ -213,15 +200,15 @@ class TrainingDAOImplIntegrationTest extends BaseIntegrationTest {
 
             session.persist(trainer);
             session.flush();
+
             return trainer;
         });
     }
 
     private TrainingType getExistingTrainingType(String trainingTypeName) {
-        return TransactionHandler.performReturningWithinSession(session -> {
+        return doInSession(session -> {
             TrainingType trainingType = session.createQuery(
-                            "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name",
-                            TrainingType.class)
+                            "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name", TrainingType.class)
                     .setParameter("name", trainingTypeName)
                     .uniqueResult();
 

@@ -1,13 +1,11 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TrainerDAO;
-import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -17,27 +15,16 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
+class TrainerDAOImplTest extends BaseIntegrationTest {
     private TrainerDAO trainerDAO;
 
     @BeforeAll
     void initDAO() {
         trainerDAO = new TrainerDAOImpl();
-    }
-
-    @BeforeEach
-    void cleanDatabase() {
-        TransactionHandler.performReturningWithinSession(session -> {
-            session.createQuery("DELETE FROM Trainer").executeUpdate();
-            session.createQuery("DELETE FROM User").executeUpdate();
-
-            return null;
-        });
     }
 
     @Test
@@ -54,7 +41,7 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
         assertEquals("jane.smith", result.getUser().getUsername());
         assertTrue(result.getUser().getIsActive());
 
-        String specializationName = TransactionHandler.performReturningWithinSession(session -> {
+        String specializationName = doInSession(session -> {
             Trainer createdTrainer = session.get(Trainer.class, result.getId());
 
             return createdTrainer.getSpecialization().getTrainingTypeName();
@@ -74,7 +61,7 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
         assertNotNull(result.getSpecialization());
         assertFalse(result.getUser().getIsActive());
 
-        String specializationName = TransactionHandler.performReturningWithinSession(session -> {
+        String specializationName = doInSession(session -> {
             Trainer createdTrainer = session.get(Trainer.class, result.getId());
 
             return createdTrainer.getSpecialization().getTrainingTypeName();
@@ -84,14 +71,14 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void testCreate_ShouldCreateTrainerWithNullSpecialization() {
-        Trainer trainer = createTrainerWithNullSpecialization();
+    void testCreate_ShouldCreateTrainerWithNotNullSpecialization() {
+        Trainer trainer = createTrainer("HIIT", false);
 
         Trainer result = trainerDAO.create(trainer);
 
         assertNotNull(result);
         assertNotNull(result.getId());
-        assertNull(result.getSpecialization());
+        assertEquals("HIIT", result.getSpecialization().getTrainingTypeName());
         assertFalse(result.getUser().getIsActive());
     }
 
@@ -105,7 +92,7 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
         assertTrue(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
 
-        String specializationName = TransactionHandler.performReturningWithinSession(session -> {
+        String specializationName = doInSession(session -> {
             Trainer foundTrainer = session.get(Trainer.class, found.get().getId());
 
             return foundTrainer.getSpecialization().getTrainingTypeName();
@@ -132,7 +119,7 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
 
         Trainer t1 = Trainer.builder()
                 .user(user)
-                .specialization(null)
+                .specialization(getExistingTrainingType("Strength"))
                 .build();
 
         Trainer t2 = createTrainer("Strength", true);
@@ -175,7 +162,7 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
         assertNotNull(result);
         assertEquals("Jane Updated", result.getUser().getFirstName());
 
-        String specializationName = TransactionHandler.performReturningWithinSession(session -> {
+        String specializationName = doInSession(session -> {
             Trainer updatedTrainerFromDb = session.get(Trainer.class, result.getId());
 
             return updatedTrainerFromDb.getSpecialization().getTrainingTypeName();
@@ -222,26 +209,10 @@ class TrainerDAOImplIntegrationTest extends BaseIntegrationTest {
                 .build();
     }
 
-    private Trainer createTrainerWithNullSpecialization() {
-        User user = User.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .username("jane.smith")
-                .password("password456")
-                .isActive(false)
-                .build();
-
-        return Trainer.builder()
-                .user(user)
-                .specialization(null)
-                .build();
-    }
-
     private TrainingType getExistingTrainingType(String trainingTypeName) {
-        return TransactionHandler.performReturningWithinSession(session -> {
+        return doInSession(session -> {
             TrainingType trainingType = session.createQuery(
-                            "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name",
-                            TrainingType.class)
+                            "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name", TrainingType.class)
                     .setParameter("name", trainingTypeName)
                     .uniqueResult();
 

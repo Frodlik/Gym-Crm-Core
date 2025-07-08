@@ -11,8 +11,8 @@
     <include file="/db/changelog/init/004-create-trainers-table.xml"/>
     <include file="/db/changelog/init/005-create-trainings-table.xml"/>
     <include file="/db/changelog/init/006-create-trainees-trainers-table.xml"/>
-    <include file="/db/changelog/init/007-insert-initial-data.xml"/>
+    <include file="/db/changelog/init/007-insert-initial-data.xml" context="development"/>
 
-    <include file="db/changelog/2025Q3/2025Q3-changelog.xml"/>
+    <include file="db/changelog/2025Q3/2025Q3-changelog.xml" context="test"/>
 
 </databaseChangeLog>
