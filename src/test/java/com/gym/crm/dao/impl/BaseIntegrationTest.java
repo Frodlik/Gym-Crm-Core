@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 @ExtendWith(SpringExtension.class)
 @Testcontainers
-@ComponentScan(basePackages = "com.gym.crm.dao.impl")
+@ContextConfiguration(classes = {TraineeDAOImpl.class, TrainerDAOImpl.class, TrainingDAOImpl.class})
 public abstract class BaseIntegrationTest<R> {
     private static final String DB_NAME = "gym_crm_test";
     private static final String USER = "test";
@@ -46,42 +46,34 @@ public abstract class BaseIntegrationTest<R> {
             .withPassword(PASSWORD);
 
     protected static SessionFactory sessionFactory;
+    private static MysqlDataSource dataSource;
 
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     protected R dao;
 
-    @BeforeEach
-    void cleanDatabase() {
-        doInSession(session -> {
-            session.createMutationQuery("DELETE FROM Training ").executeUpdate();
-            session.createMutationQuery("DELETE FROM Trainer ").executeUpdate();
-            session.createMutationQuery("DELETE FROM Trainee ").executeUpdate();
-            session.createMutationQuery("DELETE FROM User ").executeUpdate();
-        });
-    }
-
     @BeforeAll
-    static void setUpBase() throws Exception {
+    static void setUpContainer() {
         mysql.start();
 
-        MysqlDataSource dataSource = new MysqlDataSource();
+        dataSource = new MysqlDataSource();
         dataSource.setURL(mysql.getJdbcUrl());
         dataSource.setUser(mysql.getUsername());
         dataSource.setPassword(mysql.getPassword());
-
-        runLiquibaseMigrations(dataSource);
 
         sessionFactory = buildHibernateConfiguration().buildSessionFactory();
         new TransactionHandler(sessionFactory);
     }
 
     @AfterAll
-    static void tearDownBase() {
-        if (sessionFactory != null) {
-            sessionFactory.close();
-        }
+    static void tearDownContainer() {
+        if (sessionFactory != null) sessionFactory.close();
         mysql.stop();
+    }
+
+    @BeforeEach
+    void resetDatabase() throws Exception {
+        runLiquibaseMigrations(dataSource);
     }
 
     private static Configuration buildHibernateConfiguration() {

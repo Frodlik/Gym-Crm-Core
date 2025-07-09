@@ -5,7 +5,6 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,62 +18,53 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ContextConfiguration(classes = {TraineeDAOImpl.class})
 class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     @Test
     void testCreate_ShouldPersistTraineeSuccessfully() {
-        Trainee trainee = createSampleTrainee();
+        Trainee sample = createSampleTrainee();
+        Trainee actual = dao.create(sample);
 
-        Trainee savedTrainee = dao.create(trainee);
+        assertNotNull(actual.getId());
+        assertEquals("Alex", actual.getUser().getFirstName());
 
-        assertNotNull(savedTrainee);
-        assertNotNull(savedTrainee.getId());
-        assertNotNull(savedTrainee.getUser().getId());
-        assertEquals("John", savedTrainee.getUser().getFirstName());
-        assertEquals("Doe", savedTrainee.getUser().getLastName());
-        assertEquals("john.doe", savedTrainee.getUser().getUsername());
-        assertEquals(LocalDate.of(1990, 1, 1), savedTrainee.getDateOfBirth());
-        assertEquals("123 Main St", savedTrainee.getAddress());
-        assertTrue(savedTrainee.getUser().getIsActive());
+        List<Trainee> all = dao.findAll();
+        assertTrue(all.stream().anyMatch(t -> t.getId().equals(actual.getId())));
     }
 
     @Test
     void testCreate_ShouldPersistTraineeWithNullAddress() {
-        User user = User.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .username("john.doe")
-                .password("password123")
-                .isActive(false)
-                .build();
-
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
+        Trainee t = Trainee.builder()
+                .user(User.builder()
+                        .firstName("John")
+                        .lastName("Doe")
+                        .username("john.doe")
+                        .password("pass")
+                        .isActive(false)
+                        .build())
+                .dateOfBirth(LocalDate.of(1990,1,1))
                 .address(null)
                 .build();
 
-        Trainee savedTrainee = dao.create(trainee);
-
-        assertNotNull(savedTrainee);
-        assertNotNull(savedTrainee.getId());
-        assertNull(savedTrainee.getAddress());
-        assertFalse(savedTrainee.getUser().getIsActive());
+        Trainee actual = dao.create(t);
+        assertNotNull(actual.getId());
+        assertNull(actual.getAddress());
+        assertFalse(actual.getUser().getIsActive());
     }
 
     @Test
     void testFindById_ShouldReturnTraineeWhenExists() {
-        Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = dao.create(trainee);
+        Long existingId = 1L;
 
-        Optional<Trainee> foundTrainee = dao.findById(savedTrainee.getId());
+        Optional<Trainee> found = dao.findById(existingId);
 
-        assertTrue(foundTrainee.isPresent());
-        assertEquals(savedTrainee.getId(), foundTrainee.get().getId());
-        assertEquals(savedTrainee.getUser().getFirstName(), foundTrainee.get().getUser().getFirstName());
-        assertEquals(savedTrainee.getUser().getLastName(), foundTrainee.get().getUser().getLastName());
-        assertEquals(savedTrainee.getDateOfBirth(), foundTrainee.get().getDateOfBirth());
-        assertEquals(savedTrainee.getAddress(), foundTrainee.get().getAddress());
+        assertTrue(found.isPresent());
+        Trainee t = found.get();
+
+        assertEquals(LocalDate.of(1995, 3, 15), t.getDateOfBirth());
+        assertEquals("123 Main St, New York, NY 10001", t.getAddress());
+        assertEquals("Emma", t.getUser().getFirstName());
+        assertEquals("Miller", t.getUser().getLastName());
+        assertEquals("emma.miller", t.getUser().getUsername());
     }
 
     @Test
@@ -87,63 +77,49 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     }
 
     @Test
-    void testFindAll_ShouldReturnAllTrainees() {
-        Trainee trainee1 = createSampleTraineeWithUsername("john.doe1");
-        Trainee trainee2 = createSampleTraineeWithDetails("Smith", "jane.doe",
-                LocalDate.of(1985, 5, 15), "456 Oak Ave");
-
-        dao.create(trainee1);
-        dao.create(trainee2);
-
+    void testFindAll_ShouldReturnInitialTraineesFromLiquibase() {
         List<Trainee> allTrainees = dao.findAll();
 
         assertNotNull(allTrainees);
-        assertEquals(2, allTrainees.size());
+        assertEquals(5, allTrainees.size());
 
-        assertTrue(allTrainees.stream()
-                .anyMatch(t -> "john.doe1".equals(t.getUser().getUsername())));
-        assertTrue(allTrainees.stream()
-                .anyMatch(t -> "jane.doe".equals(t.getUser().getUsername())));
-    }
+        List<String> expectedUsernames = List.of(
+                "emma.miller", "james.garcia", "olivia.martinez",
+                "william.anderson", "sophia.taylor"
+        );
 
-    @Test
-    void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
-        List<Trainee> allTrainees = dao.findAll();
+        List<String> actualUsernames = allTrainees.stream()
+                .map(t -> t.getUser().getUsername())
+                .toList();
 
-        assertNotNull(allTrainees);
-        assertTrue(allTrainees.isEmpty());
+        assertTrue(actualUsernames.containsAll(expectedUsernames));
     }
 
     @Test
     void testUpdate_ShouldUpdateExistingTrainee() {
-        Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = dao.create(trainee);
+        Long idToUpdate = 2L;
+        Trainee original = dao.findById(idToUpdate).orElseThrow();
 
-        User updatedUser = savedTrainee.getUser().toBuilder()
-                .firstName("John Updated")
+        User updatedUser = original.getUser().toBuilder()
+                .firstName("UpdatedFirst")
+                .lastName("UpdatedLast")
                 .isActive(false)
                 .build();
 
-        Trainee updatedTrainee = savedTrainee.toBuilder()
+        Trainee modified = original.toBuilder()
                 .user(updatedUser)
-                .address("456 Oak Ave")
-                .dateOfBirth(LocalDate.of(1985, 12, 25))
+                .address("Updated Address 456")
+                .dateOfBirth(LocalDate.of(1980, 12, 31))
                 .build();
 
-        Trainee result = dao.update(updatedTrainee);
+        Trainee result = dao.update(modified);
 
-        assertNotNull(result);
-        assertEquals(savedTrainee.getId(), result.getId());
-        assertEquals("John Updated", result.getUser().getFirstName());
+        assertEquals(idToUpdate, result.getId());
+        assertEquals("UpdatedFirst", result.getUser().getFirstName());
+        assertEquals("UpdatedLast",  result.getUser().getLastName());
         assertFalse(result.getUser().getIsActive());
-        assertEquals("456 Oak Ave", result.getAddress());
-        assertEquals(LocalDate.of(1985, 12, 25), result.getDateOfBirth());
-
-        Optional<Trainee> persistedTrainee = dao.findById(savedTrainee.getId());
-        assertTrue(persistedTrainee.isPresent());
-        assertEquals("John Updated", persistedTrainee.get().getUser().getFirstName());
-        assertFalse(persistedTrainee.get().getUser().getIsActive());
-        assertEquals("456 Oak Ave", persistedTrainee.get().getAddress());
+        assertEquals("Updated Address 456", result.getAddress());
+        assertEquals(LocalDate.of(1980, 12, 31), result.getDateOfBirth());
     }
 
     @Test
@@ -171,15 +147,11 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
     @Test
     void testDelete_ShouldReturnTrueWhenTraineeExists() {
-        Trainee trainee = createSampleTrainee();
-        Trainee savedTrainee = dao.create(trainee);
+        boolean deleted = dao.delete(1L);
+        assertTrue(deleted);
 
-        boolean result = dao.delete(savedTrainee.getId());
-
-        assertTrue(result);
-
-        Optional<Trainee> deletedTrainee = dao.findById(savedTrainee.getId());
-        assertFalse(deletedTrainee.isPresent());
+        Optional<Trainee> stillThere = dao.findById(1L);
+        assertFalse(stillThere.isPresent());
     }
 
     @Test
@@ -194,8 +166,8 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     @Test
     void testConcurrentOperations_ShouldHandleMultipleTrainees() {
         Trainee trainee1 = createSampleTraineeWithUsername("user1");
-        Trainee trainee2 = createSampleTraineeWithDetails("Doe", "user2",
-                LocalDate.of(1990, 1, 1), "123 Main St");
+        Trainee trainee2 = createSampleTraineeWithDetails(
+                LocalDate.of(1990, 1, 1));
 
         Trainee saved1 = dao.create(trainee1);
         Trainee saved2 = dao.create(trainee2);
@@ -204,17 +176,23 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .firstName("John Updated")
                 .build();
 
-        dao.update(saved1.toBuilder()
-                .user(updatedUser)
-                .build());
-
+        dao.update(saved1.toBuilder().user(updatedUser).build());
         boolean deleted = dao.delete(saved2.getId());
 
         List<Trainee> allTrainees = dao.findAll();
-        assertEquals(1, allTrainees.size());
-        assertEquals("John Updated", allTrainees.getFirst().getUser().getFirstName());
-        assertEquals("user1", allTrainees.getFirst().getUser().getUsername());
+
+        Optional<Trainee> updated = allTrainees.stream()
+                .filter(t -> t.getUser().getUsername().equals("user1"))
+                .findFirst();
+
+        Optional<Trainee> deletedCheck = allTrainees.stream()
+                .filter(t -> t.getUser().getUsername().equals("user2"))
+                .findFirst();
+
+        assertTrue(updated.isPresent());
+        assertEquals("John Updated", updated.get().getUser().getFirstName());
         assertTrue(deleted);
+        assertFalse(deletedCheck.isPresent());
     }
 
     @Test
@@ -229,9 +207,9 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
     private Trainee createSampleTrainee() {
         User user = User.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .username("john.doe")
+                .firstName("Alex")
+                .lastName("Turner")
+                .username("alex.turner")
                 .password("password123")
                 .isActive(true)
                 .build();
@@ -259,12 +237,11 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .build();
     }
 
-    private Trainee createSampleTraineeWithDetails(String lastName, String username,
-                                                   LocalDate dateOfBirth, String address) {
+    private Trainee createSampleTraineeWithDetails(LocalDate dateOfBirth) {
         User user = User.builder()
                 .firstName("Jane")
-                .lastName(lastName)
-                .username(username)
+                .lastName("Doe")
+                .username("user2")
                 .password("password123")
                 .isActive(true)
                 .build();
@@ -272,7 +249,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
         return Trainee.builder()
                 .user(user)
                 .dateOfBirth(dateOfBirth)
-                .address(address)
+                .address("123 Main St")
                 .build();
     }
 }

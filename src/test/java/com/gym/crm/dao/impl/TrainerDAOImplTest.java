@@ -6,7 +6,6 @@ import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ContextConfiguration(classes = {TrainerDAOImpl.class})
 class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
     @Test
     void testCreate_ShouldCreateTrainer() {
@@ -77,21 +75,20 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
 
     @Test
     void testFindById_ShouldReturnTrainerWhenExists() {
-        Trainer trainer = createTrainer("Cardio", true);
-        Trainer saved = dao.create(trainer);
+        Long existingId = 1L;
 
-        Optional<Trainer> found = dao.findById(saved.getId());
+        Optional<Trainer> found = dao.findById(existingId);
 
         assertTrue(found.isPresent());
-        assertEquals(saved.getId(), found.get().getId());
 
-        String specializationName = doInSession(session -> {
-            Trainer foundTrainer = session.get(Trainer.class, found.get().getId());
+        Trainer t = found.get();
+        assertEquals(existingId, t.getId());
 
-            return foundTrainer.getSpecialization().getTrainingTypeName();
+        String specName = doInSession(session -> {
+            Trainer persisted = session.get(Trainer.class, existingId);
+            return persisted.getSpecialization().getTrainingTypeName();
         });
-
-        assertEquals("Cardio", specializationName);
+        assertEquals("Strength", specName);
     }
 
     @Test
@@ -102,50 +99,26 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
 
     @Test
     void testFindAll_ShouldReturnAllTrainers() {
-        User user = User.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .username("jane.smith1")
-                .password("password456")
-                .isActive(true)
-                .build();
-
-        Trainer t1 = Trainer.builder()
-                .user(user)
-                .specialization(getExistingTrainingType("Strength"))
-                .build();
-
-        Trainer t2 = createTrainer("Strength", true);
-        dao.create(t1);
-        dao.create(t2);
-
         List<Trainer> list = dao.findAll();
 
         assertNotNull(list);
-        assertEquals(2, list.size());
-    }
-
-    @Test
-    void testFindAll_ShouldReturnEmptyListWhenNoTrainers() {
-        List<Trainer> list = dao.findAll();
-
-        assertNotNull(list);
-        assertTrue(list.isEmpty());
+        assertEquals(5, list.size());
     }
 
     @Test
     void testUpdate_ShouldUpdateExistingTrainer() {
-        Trainer trainer = createTrainer("Strength", true);
-        Trainer saved = dao.create(trainer);
+        Long idToUpdate = 2L;
+
+        Trainer trainer = dao.findById(idToUpdate).get();
 
         TrainingType hiitType = getExistingTrainingType("HIIT");
 
-        User updatedUser = saved.getUser().toBuilder()
-                .firstName("Jane Updated")
+        User updatedUser = trainer.getUser().toBuilder()
+                .firstName("UpdatedJane")
                 .isActive(false)
                 .build();
 
-        Trainer updatedTrainer = saved.toBuilder()
+        Trainer updatedTrainer = trainer.toBuilder()
                 .user(updatedUser)
                 .specialization(hiitType)
                 .build();
@@ -153,7 +126,7 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
         Trainer result = dao.update(updatedTrainer);
 
         assertNotNull(result);
-        assertEquals("Jane Updated", result.getUser().getFirstName());
+        assertEquals("UpdatedJane", result.getUser().getFirstName());
 
         String specializationName = doInSession(session -> {
             Trainer updatedTrainerFromDb = session.get(Trainer.class, result.getId());
