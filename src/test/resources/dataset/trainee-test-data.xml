@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <training_types id="1" training_type_name="Yoga"/>
+    <training_types id="2" training_type_name="Fitness"/>
+    <training_types id="3" training_type_name="Cardio"/>
+
+    <users id="1" first_name="Emma" last_name="Miller" username="emma.miller" password="password123" is_active="true"/>
+    <users id="2" first_name="John" last_name="Trainer" username="john.trainer" password="password123" is_active="true"/>
+
+    <trainees id="1" user_id="1" address="123 Main St, New York, NY 10001" date_of_birth="1990-01-01"/>
+
+    <trainers id="1" user_id="2" specialization="2"/>
+
+    <trainings id="1" training_name="Sample Training" training_date="2025-07-01" training_duration="60" trainee_id="1" trainer_id="1" training_type_id="1"/>
+
+    <trainees_trainers trainee_id="1" trainer_id="1"/>
+</dataset>

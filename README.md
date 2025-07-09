@@ -1,6 +1,20 @@
 # Gym CRM Core
 **CRM system for gym management.**
 
+# Prerequisites
+Before you build or run the project, make sure the following software is installed on your machine:
+
+| Technology | Minimum Version |
+| ---------- |-----------------|
+| Java       | 21              |
+| Maven      | 3.8+            |
+| Docker     | 20.10+          |
+| MySQL      | 8.0+            |
+
+Docker is required to run integration tests via Testcontainers.
+> *Optional:* You can use MySQL Workbench or any other database client to inspect the schema, test queries, or browse data.
+
+
 # Getting Started (Local Setup)
 
 1. ## Database Setup (MySQL)

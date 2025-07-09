@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 @Component
 public class TransactionHandler {
-    private static SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     @Autowired
     public TransactionHandler(SessionFactory sessionFactory) {
-        TransactionHandler.sessionFactory = sessionFactory;
+        this.sessionFactory = sessionFactory;
     }
 
-    public static <T> T performReturningWithinSession(Function<Session, T> sessionFunction) {
+    public <T> T performReturningWithinSession(Function<Session, T> sessionFunction) {
         Session session = sessionFactory.openSession();
         session.beginTransaction();
         try {

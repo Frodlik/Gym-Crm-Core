@@ -1,223 +1,239 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.hibernate.TransactionHandler;
+import com.github.database.rider.core.api.dataset.DataSet;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.query.Query;
+import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith(MockitoExtension.class)
-class TrainingDAOImplTest {
-    private static final Long TRAINING_ID = 1L;
-    private static final Long TRAINEE_ID = 1L;
-    private static final Long TRAINER_ID = 2L;
-    private static final String TRAINING_NAME = "Morning Yoga Session";
-    private static final TrainingType TRAINING_TYPE = TrainingType.builder().trainingTypeName("Yoga").build();
-    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
-    private static final int DURATION = 60;
-
-    @Mock
-    private SessionFactory sessionFactory;
-    @Mock
-    private Session session;
-    @Mock
-    private Transaction transaction;
-    @Mock
-    private Query<Training> query;
-    @InjectMocks
-    private TrainingDAOImpl dao;
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
     @Test
-    void testCreate_ShouldCreateTraining() {
-        Training training = createTraining(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE, TRAINING_DATE, DURATION);
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
+        Training trainingToCreate = createSampleTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
 
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, Training> function = invocation.getArgument(0);
-                        return function.apply(session);
-                    });
+        Training actual = dao.create(trainingToCreate);
 
-            Training result = dao.create(training);
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
 
-            assertEquals(training, result);
-            verify(session).persist(training);
-        }
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("Morning Yoga Session", actual.getTrainingName());
+        assertEquals(60, actual.getTrainingDuration());
+        assertEquals(LocalDate.of(2024, 8, 15), actual.getTrainingDate());
+        assertNotNull(actual.getTrainee());
+        assertNotNull(actual.getTrainer());
+        assertNotNull(actual.getTrainingType());
+        assertEquals("Yoga", actualTrainingTypeName);
     }
 
     @Test
-    void testCreate_ShouldCreateTrainingWithNullTrainingType() {
-        Training training = createTraining(3L, 4L, "General Training", null,
-                LocalDate.of(2024, 2, 20), 90);
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
+        Training trainingToCreate = createSampleTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
 
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, Training> function = invocation.getArgument(0);
-                        return function.apply(session);
-                    });
+        Training actual = dao.create(trainingToCreate);
 
-            Training result = dao.create(training);
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
 
-            assertEquals(training, result);
-            verify(session).persist(training);
-            assertNull(training.getTrainingType());
-        }
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("General Flexibility Training", actual.getTrainingName());
+        assertEquals(90, actual.getTrainingDuration());
+        assertEquals("Flexibility", actualTrainingTypeName);
     }
 
     @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
+        LocalDate todayDate = LocalDate.now();
+        Training trainingToCreate = createSampleTrainingWithMinimalData(todayDate);
+
+        Training actual = dao.create(trainingToCreate);
+
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
+
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("Quick Session", actual.getTrainingName());
+        assertEquals(todayDate, actual.getTrainingDate());
+        assertEquals(30, actual.getTrainingDuration());
+        assertNotNull(actual.getTrainingType());
+        assertEquals("Cardio", actualTrainingTypeName);
+    }
+
+    @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTrainingWhenExists() {
-        Training expected = createSampleTraining();
+        Long existingTrainingId = 1L;
 
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, Optional<Training>> function = invocation.getArgument(0);
-                        when(session.find(Training.class, TRAINING_ID)).thenReturn(expected);
-                        return function.apply(session);
-                    });
+        Training actual = dao.findById(existingTrainingId).orElseThrow();
 
-            Optional<Training> actual = dao.findById(TRAINING_ID);
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, existingTrainingId);
 
-            assertTrue(actual.isPresent());
-            assertEquals(expected, actual.get());
-            verify(session).find(Training.class, TRAINING_ID);
-        }
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertEquals(existingTrainingId, actual.getId());
+        assertEquals("Power Strength Training", actual.getTrainingName());
+        assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
+        assertEquals(75, actual.getTrainingDuration());
+        assertEquals("Strength", actualTrainingTypeName);
+        assertEquals("alex.trainer", actual.getTrainer().getUser().getUsername());
+        assertEquals("john.trainee", actual.getTrainee().getUser().getUsername());
     }
 
     @Test
-    void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Long id = 999L;
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindById_ShouldReturnEmptyWhenTrainingNotExists() {
+        Long nonExistentTrainingId = 999L;
 
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, Optional<Training>> function = invocation.getArgument(0);
-                        when(session.find(Training.class, id)).thenReturn(null);
-                        return function.apply(session);
-                    });
+        Optional<Training> actual = dao.findById(nonExistentTrainingId);
 
-            Optional<Training> actual = dao.findById(id);
-
-            assertFalse(actual.isPresent());
-            verify(session).find(Training.class, id);
-        }
+        assertFalse(actual.isPresent());
     }
 
     @Test
-    void testFindAll_ShouldReturnAllTrainings() {
-        Training training1 = createSampleTraining();
-        Training training2 = createTraining(3L, 4L, "Evening Pilates",
-                TrainingType.builder().trainingTypeName("Pilates").build(), TRAINING_DATE, 75);
-        List<Training> expectedList = Arrays.asList(training1, training2);
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnAllExistingTrainings() {
+        int expectedTrainingsCount = 4;
 
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, List<Training>> function = invocation.getArgument(0);
-                        when(session.createQuery("FROM Training", Training.class)).thenReturn(query);
-                        when(query.getResultList()).thenReturn(expectedList);
-                        return function.apply(session);
-                    });
+        List<Training> actualTrainingsList = dao.findAll();
 
-            List<Training> actual = dao.findAll();
+        Training firstTraining = actualTrainingsList.stream()
+                .filter(t -> t.getTrainingName().equals("Power Strength Training"))
+                .findFirst()
+                .orElseThrow();
 
-            assertEquals(2, actual.size());
-            assertTrue(actual.contains(training1));
-            assertTrue(actual.contains(training2));
-            verify(session).createQuery("FROM Training", Training.class);
-            verify(query).getResultList();
-        }
+        Training secondTraining = actualTrainingsList.stream()
+                .filter(t -> t.getTrainingName().equals("Relaxing Yoga Session"))
+                .findFirst()
+                .orElseThrow();
+
+        assertNotNull(actualTrainingsList);
+        assertEquals(expectedTrainingsCount, actualTrainingsList.size());
+        assertEquals("Power Strength Training", firstTraining.getTrainingName());
+        assertEquals(75, firstTraining.getTrainingDuration());
+        assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
+        assertEquals(90, secondTraining.getTrainingDuration());
+        assertEquals("alex.trainer", firstTraining.getTrainer().getUser().getUsername());
+        assertEquals("maria.trainer", secondTraining.getTrainer().getUser().getUsername());
     }
 
-    @Test
-    void testFindAll_ShouldReturnEmptyListWhenNoTrainings() {
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, List<Training>> function = invocation.getArgument(0);
-                        when(session.createQuery("FROM Training", Training.class)).thenReturn(query);
-                        when(query.getResultList()).thenReturn(Collections.emptyList());
-                        return function.apply(session);
-                    });
-
-            List<Training> actual = dao.findAll();
-
-            assertTrue(actual.isEmpty());
-            verify(session).createQuery("FROM Training", Training.class);
-            verify(query).getResultList();
-        }
-    }
-
-    @Test
-    void testCreate_ShouldHandleTrainingWithMinimalData() {
-        LocalDate today = LocalDate.now();
-        Training training = createTraining(5L, 6L, "Quick Session", null, today, 30);
-
-        try (MockedStatic<TransactionHandler> mockedStatic = mockStatic(TransactionHandler.class)) {
-            mockedStatic.when(() -> TransactionHandler.performReturningWithinSession(any(Function.class)))
-                    .thenAnswer(invocation -> {
-                        Function<Session, Training> function = invocation.getArgument(0);
-                        return function.apply(session);
-                    });
-
-            Training result = dao.create(training);
-
-            assertEquals(training, result);
-            verify(session).persist(training);
-            assertEquals("Quick Session", training.getTrainingName());
-            assertEquals(today, training.getTrainingDate());
-            assertEquals(30, training.getTrainingDuration());
-            assertNull(training.getTrainingType());
-        }
-    }
-
-    private Training createSampleTraining() {
-        return createTraining(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE, TRAINING_DATE, DURATION);
-    }
-
-    private Training createTraining(Long traineeId, Long trainerId, String name, TrainingType type, LocalDate date, int duration) {
-        Trainee trainee = Trainee.builder()
-                .id(traineeId)
-                .build();
-
-        Trainer trainer = Trainer.builder()
-                .id(trainerId)
-                .build();
+    private Training createSampleTrainingWithSpecialization(String trainingName, String trainingTypeName, int duration) {
+        Trainee trainee = createSampleTrainee();
+        Trainer trainer = createSampleTrainer();
+        TrainingType trainingType = trainingTypeName != null ? getExistingTrainingType(trainingTypeName) : null;
 
         return Training.builder()
                 .trainee(trainee)
                 .trainer(trainer)
-                .trainingName(name)
-                .trainingType(type)
-                .trainingDate(date)
+                .trainingName(trainingName)
+                .trainingType(trainingType)
+                .trainingDate(LocalDate.of(2024, 8, 15))
                 .trainingDuration(duration)
                 .build();
+    }
+
+    private Training createSampleTrainingWithMinimalData(LocalDate trainingDate) {
+        Trainee trainee = createSampleTrainee();
+        Trainer trainer = createSampleTrainer();
+        TrainingType defaultTrainingType = getExistingTrainingType("Cardio");
+
+        return Training.builder()
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingName("Quick Session")
+                .trainingType(defaultTrainingType)
+                .trainingDate(trainingDate)
+                .trainingDuration(30)
+                .build();
+    }
+
+    private Trainee createSampleTrainee() {
+        return doInSession(session -> {
+            User user = User.builder()
+                    .firstName("John")
+                    .lastName("Doe")
+                    .username("john.doe" + System.currentTimeMillis())
+                    .password("password123")
+                    .isActive(true)
+                    .build();
+
+            Trainee trainee = Trainee.builder()
+                    .user(user)
+                    .dateOfBirth(LocalDate.of(1990, 1, 1))
+                    .address("123 Main St")
+                    .build();
+
+            session.persist(trainee);
+            session.flush();
+
+            return trainee;
+        });
+    }
+
+    private Trainer createSampleTrainer() {
+        return doInSession(session -> {
+            User user = User.builder()
+                    .firstName("Jane")
+                    .lastName("Smith")
+                    .username("jane.smith" + System.currentTimeMillis())
+                    .password("password456")
+                    .isActive(true)
+                    .build();
+
+            TrainingType specialization = getExistingTrainingType("Yoga");
+
+            Trainer trainer = Trainer.builder()
+                    .user(user)
+                    .specialization(specialization)
+                    .build();
+
+            session.persist(trainer);
+            session.flush();
+
+            return trainer;
+        });
+    }
+
+    private TrainingType getExistingTrainingType(String trainingTypeName) {
+        return doInSession(session -> {
+            TrainingType trainingType = session.createQuery(
+                            "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name", TrainingType.class)
+                    .setParameter("name", trainingTypeName)
+                    .uniqueResult();
+
+            if (trainingType != null) {
+                session.evict(trainingType);
+            }
+
+            return trainingType;
+        });
     }
 }

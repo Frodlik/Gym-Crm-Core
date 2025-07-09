@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <training_types id="1" training_type_name="Strength"/>
+    <training_types id="2" training_type_name="Yoga"/>
+    <training_types id="3" training_type_name="Cardio"/>
+    <training_types id="4" training_type_name="HIIT"/>
+    <training_types id="5" training_type_name="Pilates"/>
+    <training_types id="6" training_type_name="Flexibility"/>
+    <training_types id="7" training_type_name="Boxing"/>
+
+    <users id="1" first_name="Alex" last_name="Trainer" username="alex.trainer" password="trainer123" is_active="true"/>
+    <users id="2" first_name="Maria" last_name="Instructor" username="maria.trainer" password="instructor456" is_active="true"/>
+    <users id="3" first_name="Chris" last_name="Coach" username="chris.coach" password="coach789" is_active="false"/>
+    <users id="4" first_name="John" last_name="Trainee" username="john.trainee" password="trainee123" is_active="true"/>
+    <users id="5" first_name="Emma" last_name="Student" username="emma.student" password="student456" is_active="true"/>
+    <users id="6" first_name="Robert" last_name="Member" username="robert.member" password="member789" is_active="false"/>
+
+    <trainers id="1" user_id="1" specialization="1"/>
+    <trainers id="2" user_id="2" specialization="2"/>
+    <trainers id="3" user_id="3" specialization="3"/>
+
+    <trainees id="1" user_id="4" address="789 Fitness Street, New York, NY 10001" date_of_birth="1988-07-12"/>
+    <trainees id="2" user_id="5" address="456 Workout Avenue, Boston, MA 02101" date_of_birth="1995-04-08"/>
+    <trainees id="3" user_id="6" address="123 Training Road, Seattle, WA 98101" date_of_birth="1982-11-25"/>
+
+    <trainings id="1" training_name="Power Strength Training" training_date="2024-08-10" training_duration="75" trainee_id="1" trainer_id="1" training_type_id="1"/>
+    <trainings id="2" training_name="Relaxing Yoga Session" training_date="2024-08-11" training_duration="90" trainee_id="2" trainer_id="2" training_type_id="2"/>
+    <trainings id="3" training_name="Intensive Cardio Workout" training_date="2024-08-12" training_duration="45" trainee_id="3" trainer_id="3" training_type_id="3"/>
+    <trainings id="4" training_name="Full Body HIIT Session" training_date="2024-08-13" training_duration="60" trainee_id="1" trainer_id="1" training_type_id="4"/>
+
+    <trainees_trainers trainee_id="1" trainer_id="1"/>
+    <trainees_trainers trainee_id="2" trainer_id="2"/>
+    <trainees_trainers trainee_id="3" trainer_id="3"/>
+    <trainees_trainers trainee_id="1" trainer_id="2"/>
+</dataset>

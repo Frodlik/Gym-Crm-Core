@@ -17,5 +17,5 @@ liquibase:
   change-log: classpath:db/changelog/db.changelog-master.xml
   enabled: true
   drop-first: true
-  contexts: development
+  contexts: development, test
   default-schema: gym_crm
