@@ -3,6 +3,7 @@ package com.gym.crm.dao.impl;
 import com.gym.crm.dao.TrainingDAO;
 import com.gym.crm.model.Training;
 import com.gym.crm.dao.hibernate.TransactionHandler;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -11,12 +12,15 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 public class TrainingDAOImpl implements TrainingDAO {
     private static final Logger log = LoggerFactory.getLogger(TrainingDAOImpl.class);
 
+    private final TransactionHandler transactionHandler;
+
     @Override
     public Training create(Training training) {
-        return TransactionHandler.performReturningWithinSession(entityManager -> {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
             entityManager.persist(training);
 
             log.info("Created Training with ID: {}", training.getId());
@@ -27,7 +31,7 @@ public class TrainingDAOImpl implements TrainingDAO {
 
     @Override
     public Optional<Training> findById(Long id) {
-        return TransactionHandler.performReturningWithinSession(entityManager -> {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
             Training training = entityManager.find(Training.class, id);
 
             log.debug("Training found with ID: {}", id);
@@ -38,7 +42,7 @@ public class TrainingDAOImpl implements TrainingDAO {
 
     @Override
     public List<Training> findAll() {
-        return TransactionHandler.performReturningWithinSession(entityManager -> {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
             List<Training> trainings = entityManager.createQuery("FROM Training", Training.class)
                     .getResultList();
 

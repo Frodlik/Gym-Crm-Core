@@ -1,5 +1,6 @@
 package com.gym.crm.dao.impl;
 
+import com.github.database.rider.core.api.dataset.DataSet;
 import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
@@ -19,127 +20,156 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
     @Test
-    void testCreate_ShouldCreateTrainer() {
-        Trainer trainer = createTrainer("Yoga", true);
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainerWithYogaSpecialization() {
+        Trainer trainerToCreate = createSampleTrainerWithSpecialization("Yoga", true);
 
-        Trainer result = dao.create(trainer);
+        Trainer actual = dao.create(trainerToCreate);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertNotNull(result.getUser().getId());
-        assertEquals("Jane", result.getUser().getFirstName());
-        assertEquals("Smith", result.getUser().getLastName());
-        assertEquals("jane.smith", result.getUser().getUsername());
-        assertTrue(result.getUser().getIsActive());
+        String actualSpecializationName = doInSession(session -> {
+            Trainer persistedTrainer = session.get(Trainer.class, actual.getId());
 
-        String specializationName = doInSession(session -> {
-            Trainer createdTrainer = session.get(Trainer.class, result.getId());
-
-            return createdTrainer.getSpecialization().getTrainingTypeName();
+            return persistedTrainer.getSpecialization().getTrainingTypeName();
         });
 
-        assertEquals("Yoga", specializationName);
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertNotNull(actual.getUser().getId());
+        assertEquals("Jane", actual.getUser().getFirstName());
+        assertEquals("Smith", actual.getUser().getLastName());
+        assertEquals("jane.smith", actual.getUser().getUsername());
+        assertTrue(actual.getUser().getIsActive());
+        assertEquals("Yoga", actualSpecializationName);
     }
 
     @Test
-    void testCreate_ShouldCreateTrainerWithDefaultSpecialization() {
-        Trainer trainer = createTrainer("Cardio", false);
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainerWithCardioSpecializationAndInactiveStatus() {
+        Trainer trainerToCreate = createSampleTrainerWithSpecialization("Cardio", false);
 
-        Trainer result = dao.create(trainer);
+        Trainer actual = dao.create(trainerToCreate);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertNotNull(result.getSpecialization());
-        assertFalse(result.getUser().getIsActive());
+        String actualSpecializationName = doInSession(session -> {
+            Trainer persistedTrainer = session.get(Trainer.class, actual.getId());
 
-        String specializationName = doInSession(session -> {
-            Trainer createdTrainer = session.get(Trainer.class, result.getId());
-
-            return createdTrainer.getSpecialization().getTrainingTypeName();
+            return persistedTrainer.getSpecialization().getTrainingTypeName();
         });
 
-        assertEquals("Cardio", specializationName);
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertNotNull(actual.getSpecialization());
+        assertFalse(actual.getUser().getIsActive());
+        assertEquals("Cardio", actualSpecializationName);
     }
 
     @Test
-    void testCreate_ShouldCreateTrainerWithNotNullSpecialization() {
-        Trainer trainer = createTrainer("HIIT", false);
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainerWithHIITSpecializationAndInactiveStatus() {
+        Trainer trainerToCreate = createSampleTrainerWithSpecialization("HIIT", false);
 
-        Trainer result = dao.create(trainer);
+        Trainer actualTrainer = dao.create(trainerToCreate);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("HIIT", result.getSpecialization().getTrainingTypeName());
-        assertFalse(result.getUser().getIsActive());
+        assertNotNull(actualTrainer);
+        assertNotNull(actualTrainer.getId());
+        assertEquals("HIIT", actualTrainer.getSpecialization().getTrainingTypeName());
+        assertFalse(actualTrainer.getUser().getIsActive());
     }
 
     @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTrainerWhenExists() {
-        Long existingId = 1L;
+        Long existingTrainerId = 1L;
 
-        Optional<Trainer> found = dao.findById(existingId);
+        Trainer actual = dao.findById(existingTrainerId).orElseThrow();
 
-        assertTrue(found.isPresent());
+        String actualSpecializationName = doInSession(session -> {
+            Trainer persistedTrainer = session.get(Trainer.class, existingTrainerId);
 
-        Trainer t = found.get();
-        assertEquals(existingId, t.getId());
-
-        String specName = doInSession(session -> {
-            Trainer persisted = session.get(Trainer.class, existingId);
-            return persisted.getSpecialization().getTrainingTypeName();
+            return persistedTrainer.getSpecialization().getTrainingTypeName();
         });
-        assertEquals("Strength", specName);
+
+        assertEquals(existingTrainerId, actual.getId());
+        assertEquals("Sarah", actual.getUser().getFirstName());
+        assertEquals("Johnson", actual.getUser().getLastName());
+        assertEquals("sarah.johnson", actual.getUser().getUsername());
+        assertTrue(actual.getUser().getIsActive());
+        assertEquals("Strength", actualSpecializationName);
     }
 
     @Test
-    void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Optional<Trainer> found = dao.findById(999L);
-        assertFalse(found.isPresent());
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindById_ShouldReturnEmptyWhenTrainerNotExists() {
+        Long nonExistentTrainerId = 999L;
+
+        Optional<Trainer> actual = dao.findById(nonExistentTrainerId);
+
+        assertFalse(actual.isPresent());
     }
 
     @Test
-    void testFindAll_ShouldReturnAllTrainers() {
-        List<Trainer> list = dao.findAll();
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnAllExistingTrainers() {
+        int expectedTrainersCount = 3;
 
-        assertNotNull(list);
-        assertEquals(5, list.size());
+        List<Trainer> actualTrainersList = dao.findAll();
+
+        Trainer firstTrainer = actualTrainersList.stream()
+                .filter(t -> t.getUser().getUsername().equals("sarah.johnson"))
+                .findFirst()
+                .orElseThrow();
+
+        Trainer secondTrainer = actualTrainersList.stream()
+                .filter(t -> t.getUser().getUsername().equals("mike.wilson"))
+                .findFirst()
+                .orElseThrow();
+
+        assertNotNull(actualTrainersList);
+        assertEquals(expectedTrainersCount, actualTrainersList.size());
+        assertEquals("Sarah", firstTrainer.getUser().getFirstName());
+        assertEquals("Johnson", firstTrainer.getUser().getLastName());
+        assertTrue(firstTrainer.getUser().getIsActive());
+        assertEquals("Mike", secondTrainer.getUser().getFirstName());
+        assertEquals("Wilson", secondTrainer.getUser().getLastName());
+        assertFalse(secondTrainer.getUser().getIsActive());
     }
 
     @Test
-    void testUpdate_ShouldUpdateExistingTrainer() {
-        Long idToUpdate = 2L;
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdate_ShouldUpdateExistingTrainerWithNewSpecializationAndUserData() {
+        Long trainerIdToUpdate = 2L;
+        Trainer existingTrainer = dao.findById(trainerIdToUpdate).orElseThrow();
 
-        Trainer trainer = dao.findById(idToUpdate).get();
+        TrainingType pilatesSpecialization = getExistingTrainingType("Pilates");
 
-        TrainingType hiitType = getExistingTrainingType("HIIT");
-
-        User updatedUser = trainer.getUser().toBuilder()
-                .firstName("UpdatedJane")
-                .isActive(false)
+        User updatedUser = existingTrainer.getUser().toBuilder()
+                .firstName("UpdatedMike")
+                .isActive(true)
                 .build();
 
-        Trainer updatedTrainer = trainer.toBuilder()
+        Trainer trainerToUpdate = existingTrainer.toBuilder()
                 .user(updatedUser)
-                .specialization(hiitType)
+                .specialization(pilatesSpecialization)
                 .build();
 
-        Trainer result = dao.update(updatedTrainer);
+        Trainer actual = dao.update(trainerToUpdate);
 
-        assertNotNull(result);
-        assertEquals("UpdatedJane", result.getUser().getFirstName());
+        String actualSpecializationName = doInSession(session -> {
+            Trainer persistedTrainer = session.get(Trainer.class, actual.getId());
 
-        String specializationName = doInSession(session -> {
-            Trainer updatedTrainerFromDb = session.get(Trainer.class, result.getId());
-
-            return updatedTrainerFromDb.getSpecialization().getTrainingTypeName();
+            return persistedTrainer.getSpecialization().getTrainingTypeName();
         });
 
-        assertEquals("HIIT", specializationName);
+        assertNotNull(actual);
+        assertEquals("UpdatedMike", actual.getUser().getFirstName());
+        assertEquals("Wilson", actual.getUser().getLastName());
+        assertTrue(actual.getUser().getIsActive());
+        assertEquals("Pilates", actualSpecializationName);
     }
 
     @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testUpdate_ShouldThrowExceptionWhenTrainerNotExists() {
-        User user = User.builder()
+        User nonExistentUser = User.builder()
                 .firstName("Ghost")
                 .lastName("User")
                 .username("ghost.user")
@@ -147,17 +177,20 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
                 .isActive(true)
                 .build();
 
-        Trainer ghost = Trainer.builder()
+        Trainer nonExistentTrainer = Trainer.builder()
                 .id(999L)
-                .user(user)
+                .user(nonExistentUser)
                 .specialization(null)
                 .build();
 
-        TransactionHandlerException exception = assertThrows(TransactionHandlerException.class, () -> dao.update(ghost));
-        assertEquals("Error performing Hibernate operation. Transaction is rolled back", exception.getMessage());
+        TransactionHandlerException actualException = assertThrows(
+                TransactionHandlerException.class,
+                () -> dao.update(nonExistentTrainer)
+        );
+        assertEquals("Error performing Hibernate operation. Transaction is rolled back", actualException.getMessage());
     }
 
-    private Trainer createTrainer(String specializationName, boolean isActive) {
+    private Trainer createSampleTrainerWithSpecialization(String specializationName, boolean isActive) {
         String actualSpecializationName = specializationName != null ? specializationName : "Cardio";
         TrainingType specialization = getExistingTrainingType(actualSpecializationName);
 

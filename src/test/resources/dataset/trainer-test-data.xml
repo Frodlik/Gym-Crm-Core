@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <training_types id="1" training_type_name="Strength"/>
+    <training_types id="2" training_type_name="Yoga"/>
+    <training_types id="3" training_type_name="Cardio"/>
+    <training_types id="4" training_type_name="HIIT"/>
+    <training_types id="5" training_type_name="Pilates"/>
+
+    <users id="1" first_name="Sarah" last_name="Johnson" username="sarah.johnson" password="password456" is_active="true"/>
+    <users id="2" first_name="Mike" last_name="Wilson" username="mike.wilson" password="password789" is_active="false"/>
+    <users id="3" first_name="Anna" last_name="Davis" username="anna.davis" password="password321" is_active="true"/>
+    <users id="4" first_name="Tom" last_name="Brown" username="tom.brown" password="password654" is_active="true"/>
+    <users id="5" first_name="Lisa" last_name="Anderson" username="lisa.anderson" password="password987" is_active="false"/>
+
+    <trainers id="1" user_id="1" specialization="1"/>
+    <trainers id="2" user_id="2" specialization="2"/>
+    <trainers id="3" user_id="3" specialization="3"/>
+
+    <trainees id="1" user_id="4" address="456 Oak Avenue, Los Angeles, CA 90210" date_of_birth="1985-03-15"/>
+    <trainees id="2" user_id="5" address="789 Pine Street, Chicago, IL 60601" date_of_birth="1992-08-20"/>
+
+    <trainings id="1" training_name="Morning Strength Session" training_date="2025-07-05" training_duration="90" trainee_id="1" trainer_id="1" training_type_id="1"/>
+    <trainings id="2" training_name="Evening Yoga Class" training_date="2025-07-06" training_duration="75" trainee_id="2" trainer_id="2" training_type_id="2"/>
+    <trainings id="3" training_name="Cardio Workout" training_date="2025-07-07" training_duration="45" trainee_id="1" trainer_id="3" training_type_id="3"/>
+
+    <trainees_trainers trainee_id="1" trainer_id="1"/>
+    <trainees_trainers trainee_id="1" trainer_id="3"/>
+    <trainees_trainers trainee_id="2" trainer_id="2"/>
+</dataset>

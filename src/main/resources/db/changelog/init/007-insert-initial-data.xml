@@ -30,35 +30,35 @@
             <column name="last_name" value="Smith"/>
             <column name="username" value="john.smith"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="Sarah"/>
             <column name="last_name" value="Johnson"/>
             <column name="username" value="sarah.johnson"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="Michael"/>
             <column name="last_name" value="Brown"/>
             <column name="username" value="michael.brown"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="Emily"/>
             <column name="last_name" value="Davis"/>
             <column name="username" value="emily.davis"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="David"/>
             <column name="last_name" value="Wilson"/>
             <column name="username" value="david.wilson"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
 
         <insert tableName="users">
@@ -66,35 +66,35 @@
             <column name="last_name" value="Miller"/>
             <column name="username" value="emma.miller"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="James"/>
             <column name="last_name" value="Garcia"/>
             <column name="username" value="james.garcia"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="Olivia"/>
             <column name="last_name" value="Martinez"/>
             <column name="username" value="olivia.martinez"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="William"/>
             <column name="last_name" value="Anderson"/>
             <column name="username" value="william.anderson"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
         <insert tableName="users">
             <column name="first_name" value="Sophia"/>
             <column name="last_name" value="Taylor"/>
             <column name="username" value="sophia.taylor"/>
             <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
-            <column name="isActive" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
         </insert>
 
         <insert tableName="trainers">

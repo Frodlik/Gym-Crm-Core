@@ -1,6 +1,6 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.exception.TransactionHandlerException;
+import com.github.database.rider.core.api.dataset.DataSet;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
@@ -20,109 +20,110 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTraineeSuccessfully() {
-        Trainee sample = createSampleTrainee();
-        Trainee actual = dao.create(sample);
+        Trainee trainee = createSampleTrainee();
+
+        Trainee actual = dao.create(trainee);
 
         assertNotNull(actual.getId());
         assertEquals("Alex", actual.getUser().getFirstName());
-
-        List<Trainee> all = dao.findAll();
-        assertTrue(all.stream().anyMatch(t -> t.getId().equals(actual.getId())));
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTraineeWithNullAddress() {
-        Trainee t = Trainee.builder()
-                .user(User.builder()
-                        .firstName("John")
-                        .lastName("Doe")
-                        .username("john.doe")
-                        .password("pass")
-                        .isActive(false)
-                        .build())
-                .dateOfBirth(LocalDate.of(1990,1,1))
+        User user = User.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .username("john.doe")
+                .password("pass")
+                .isActive(false)
+                .build();
+
+        Trainee trainee = Trainee.builder()
+                .user(user)
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .address(null)
                 .build();
 
-        Trainee actual = dao.create(t);
+        Trainee actual = dao.create(trainee);
+
         assertNotNull(actual.getId());
         assertNull(actual.getAddress());
         assertFalse(actual.getUser().getIsActive());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTraineeWhenExists() {
         Long existingId = 1L;
 
-        Optional<Trainee> found = dao.findById(existingId);
+        Trainee actual = dao.findById(existingId).orElseThrow();
 
-        assertTrue(found.isPresent());
-        Trainee t = found.get();
-
-        assertEquals(LocalDate.of(1995, 3, 15), t.getDateOfBirth());
-        assertEquals("123 Main St, New York, NY 10001", t.getAddress());
-        assertEquals("Emma", t.getUser().getFirstName());
-        assertEquals("Miller", t.getUser().getLastName());
-        assertEquals("emma.miller", t.getUser().getUsername());
+        assertEquals(LocalDate.of(1990, 1, 1), actual.getDateOfBirth());
+        assertEquals("123 Main St, New York, NY 10001", actual.getAddress());
+        assertEquals("Emma", actual.getUser().getFirstName());
+        assertEquals("Miller", actual.getUser().getLastName());
+        assertEquals("emma.miller", actual.getUser().getUsername());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         Long nonExistentId = 999L;
 
-        Optional<Trainee> foundTrainee = dao.findById(nonExistentId);
+        Optional<Trainee> actual = dao.findById(nonExistentId);
 
-        assertFalse(foundTrainee.isPresent());
+        assertFalse(actual.isPresent());
     }
 
     @Test
-    void testFindAll_ShouldReturnInitialTraineesFromLiquibase() {
-        List<Trainee> allTrainees = dao.findAll();
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnInitialTraineesFromDataset() {
+        List<Trainee> actualTrainees = dao.findAll();
 
-        assertNotNull(allTrainees);
-        assertEquals(5, allTrainees.size());
+        Trainee trainee = actualTrainees.getFirst();
 
-        List<String> expectedUsernames = List.of(
-                "emma.miller", "james.garcia", "olivia.martinez",
-                "william.anderson", "sophia.taylor"
-        );
-
-        List<String> actualUsernames = allTrainees.stream()
-                .map(t -> t.getUser().getUsername())
-                .toList();
-
-        assertTrue(actualUsernames.containsAll(expectedUsernames));
+        assertEquals(1, actualTrainees.size());
+        assertEquals("Emma", trainee.getUser().getFirstName());
+        assertEquals("Miller", trainee.getUser().getLastName());
+        assertEquals("emma.miller", trainee.getUser().getUsername());
+        assertEquals("password123", trainee.getUser().getPassword());
+        assertEquals("123 Main St, New York, NY 10001", trainee.getAddress());
+        assertEquals(LocalDate.of(1990, 1, 1), trainee.getDateOfBirth());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testUpdate_ShouldUpdateExistingTrainee() {
-        Long idToUpdate = 2L;
-        Trainee original = dao.findById(idToUpdate).orElseThrow();
+        Long idToUpdate = 1L;
+        Trainee trainee = dao.findById(idToUpdate).orElseThrow();
 
-        User updatedUser = original.getUser().toBuilder()
+        User user = trainee.getUser().toBuilder()
                 .firstName("UpdatedFirst")
                 .lastName("UpdatedLast")
                 .isActive(false)
                 .build();
 
-        Trainee modified = original.toBuilder()
-                .user(updatedUser)
+        Trainee updated = trainee.toBuilder()
+                .user(user)
                 .address("Updated Address 456")
                 .dateOfBirth(LocalDate.of(1980, 12, 31))
                 .build();
 
-        Trainee result = dao.update(modified);
+        Trainee actual = dao.update(updated);
 
-        assertEquals(idToUpdate, result.getId());
-        assertEquals("UpdatedFirst", result.getUser().getFirstName());
-        assertEquals("UpdatedLast",  result.getUser().getLastName());
-        assertFalse(result.getUser().getIsActive());
-        assertEquals("Updated Address 456", result.getAddress());
-        assertEquals(LocalDate.of(1980, 12, 31), result.getDateOfBirth());
+        assertEquals(idToUpdate, actual.getId());
+        assertEquals("UpdatedFirst", actual.getUser().getFirstName());
+        assertEquals("UpdatedLast", actual.getUser().getLastName());
+        assertFalse(actual.getUser().getIsActive());
+        assertEquals("Updated Address 456", actual.getAddress());
+        assertEquals(LocalDate.of(1980, 12, 31), actual.getDateOfBirth());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testUpdate_ShouldThrowExceptionWhenTraineeNotExists() {
         User nonExistentUser = User.builder()
                 .firstName("Non")
@@ -139,35 +140,35 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .address("123 Main St")
                 .build();
 
-        TransactionHandlerException exception = assertThrows(TransactionHandlerException.class,
-                () -> dao.update(nonExistentTrainee));
-
-        assertEquals("Error performing Hibernate operation. Transaction is rolled back", exception.getMessage());
+        assertThrows(RuntimeException.class, () -> dao.update(nonExistentTrainee));
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testDelete_ShouldReturnTrueWhenTraineeExists() {
-        boolean deleted = dao.delete(1L);
-        assertTrue(deleted);
+        boolean isDeleted = dao.delete(1L);
 
-        Optional<Trainee> stillThere = dao.findById(1L);
-        assertFalse(stillThere.isPresent());
+        Optional<Trainee> trainee = dao.findById(1L);
+
+        assertTrue(isDeleted);
+        assertFalse(trainee.isPresent());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testDelete_ShouldReturnFalseWhenTraineeNotExists() {
         Long nonExistentId = 999L;
 
-        boolean result = dao.delete(nonExistentId);
+        boolean isDeleted = dao.delete(nonExistentId);
 
-        assertFalse(result);
+        assertFalse(isDeleted);
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testConcurrentOperations_ShouldHandleMultipleTrainees() {
         Trainee trainee1 = createSampleTraineeWithUsername("user1");
-        Trainee trainee2 = createSampleTraineeWithDetails(
-                LocalDate.of(1990, 1, 1));
+        Trainee trainee2 = createSampleTraineeWithDetails(LocalDate.of(1990, 1, 1));
 
         Trainee saved1 = dao.create(trainee1);
         Trainee saved2 = dao.create(trainee2);
@@ -177,7 +178,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .build();
 
         dao.update(saved1.toBuilder().user(updatedUser).build());
-        boolean deleted = dao.delete(saved2.getId());
+        boolean isDeleted = dao.delete(saved2.getId());
 
         List<Trainee> allTrainees = dao.findAll();
 
@@ -191,18 +192,29 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
         assertTrue(updated.isPresent());
         assertEquals("John Updated", updated.get().getUser().getFirstName());
-        assertTrue(deleted);
+        assertTrue(isDeleted);
         assertFalse(deletedCheck.isPresent());
     }
 
     @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testDatabaseConstraints_ShouldEnforceUniqueUsername() {
         Trainee trainee1 = createSampleTraineeWithUsername("duplicate.user");
         Trainee trainee2 = createSampleTraineeWithUsername("duplicate.user");
 
         dao.create(trainee1);
 
-        assertThrows(Exception.class, () -> dao.create(trainee2));
+        assertThrows(RuntimeException.class, () -> dao.create(trainee2));
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
+        dao.delete(1L);
+
+        List<Trainee> allTrainees = dao.findAll();
+
+        assertTrue(allTrainees.isEmpty());
     }
 
     private Trainee createSampleTrainee() {

@@ -1,5 +1,6 @@
 package com.gym.crm.dao.impl;
 
+import com.github.database.rider.core.api.dataset.DataSet;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
@@ -15,96 +16,138 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
     @Test
-    void testCreate_ShouldCreateTraining() {
-        Training training = createTraining("Morning Yoga Session", "Yoga", 60);
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
+        Training trainingToCreate = createSampleTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
 
-        Training result = dao.create(training);
+        Training actual = dao.create(trainingToCreate);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("Morning Yoga Session", result.getTrainingName());
-        assertEquals(60, result.getTrainingDuration());
-        assertNotNull(result.getTrainee());
-        assertNotNull(result.getTrainer());
-        assertNotNull(result.getTrainingType());
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
 
-        String trainingTypeName = doInSession(session -> {
-            Training createdTraining = session.get(Training.class, result.getId());
-
-            return createdTraining.getTrainingType().getTrainingTypeName();
+            return persistedTraining.getTrainingType().getTrainingTypeName();
         });
 
-        assertEquals("Yoga", trainingTypeName);
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("Morning Yoga Session", actual.getTrainingName());
+        assertEquals(60, actual.getTrainingDuration());
+        assertEquals(LocalDate.of(2024, 8, 15), actual.getTrainingDate());
+        assertNotNull(actual.getTrainee());
+        assertNotNull(actual.getTrainer());
+        assertNotNull(actual.getTrainingType());
+        assertEquals("Yoga", actualTrainingTypeName);
     }
 
     @Test
-    void testCreate_ShouldCreateTrainingWithNotNullTrainingType() {
-        Training training = createTraining("General Training", "Flexibility", 90);
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
+        Training trainingToCreate = createSampleTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
 
-        Training result = dao.create(training);
+        Training actual = dao.create(trainingToCreate);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("General Training", result.getTrainingName());
-        assertEquals(90, result.getTrainingDuration());
-        assertEquals("Flexibility", result.getTrainingType().getTrainingTypeName());
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
+
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("General Flexibility Training", actual.getTrainingName());
+        assertEquals(90, actual.getTrainingDuration());
+        assertEquals("Flexibility", actualTrainingTypeName);
     }
 
     @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
+        LocalDate todayDate = LocalDate.now();
+        Training trainingToCreate = createSampleTrainingWithMinimalData(todayDate);
+
+        Training actual = dao.create(trainingToCreate);
+
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, actual.getId());
+
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+
+        assertNotNull(actual);
+        assertNotNull(actual.getId());
+        assertEquals("Quick Session", actual.getTrainingName());
+        assertEquals(todayDate, actual.getTrainingDate());
+        assertEquals(30, actual.getTrainingDuration());
+        assertNotNull(actual.getTrainingType());
+        assertEquals("Cardio", actualTrainingTypeName);
+    }
+
+    @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTrainingWhenExists() {
-        Long existingId = 3L;
+        Long existingTrainingId = 1L;
 
-        Optional<Training> found = dao.findById(existingId);
+        Training actual = dao.findById(existingTrainingId).orElseThrow();
 
-        assertTrue(found.isPresent());
-        Training t = found.get();
-        assertEquals("High-Intensity Cardio", t.getTrainingName());
-        assertEquals(30, t.getTrainingDuration());
+        String actualTrainingTypeName = doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, existingTrainingId);
 
-        String typeName = doInSession(session -> {
-            Training persisted = session.get(Training.class, existingId);
-            return persisted.getTrainingType().getTrainingTypeName();
+            return persistedTraining.getTrainingType().getTrainingTypeName();
         });
-        assertEquals("Cardio", typeName);
+
+        assertEquals(existingTrainingId, actual.getId());
+        assertEquals("Power Strength Training", actual.getTrainingName());
+        assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
+        assertEquals(75, actual.getTrainingDuration());
+        assertEquals("Strength", actualTrainingTypeName);
+        assertEquals("alex.trainer", actual.getTrainer().getUser().getUsername());
+        assertEquals("john.trainee", actual.getTrainee().getUser().getUsername());
     }
 
     @Test
-    void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Optional<Training> found = dao.findById(999L);
-        assertFalse(found.isPresent());
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindById_ShouldReturnEmptyWhenTrainingNotExists() {
+        Long nonExistentTrainingId = 999L;
+
+        Optional<Training> actual = dao.findById(nonExistentTrainingId);
+
+        assertFalse(actual.isPresent());
     }
 
     @Test
-    void testFindAll_ShouldReturnAllTrainings() {
-        List<Training> list = dao.findAll();
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnAllExistingTrainings() {
+        int expectedTrainingsCount = 4;
 
-        assertNotNull(list);
-        assertEquals(7, list.size());
+        List<Training> actualTrainingsList = dao.findAll();
+
+        Training firstTraining = actualTrainingsList.stream()
+                .filter(t -> t.getTrainingName().equals("Power Strength Training"))
+                .findFirst()
+                .orElseThrow();
+
+        Training secondTraining = actualTrainingsList.stream()
+                .filter(t -> t.getTrainingName().equals("Relaxing Yoga Session"))
+                .findFirst()
+                .orElseThrow();
+
+        assertNotNull(actualTrainingsList);
+        assertEquals(expectedTrainingsCount, actualTrainingsList.size());
+        assertEquals("Power Strength Training", firstTraining.getTrainingName());
+        assertEquals(75, firstTraining.getTrainingDuration());
+        assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
+        assertEquals(90, secondTraining.getTrainingDuration());
+        assertEquals("alex.trainer", firstTraining.getTrainer().getUser().getUsername());
+        assertEquals("maria.trainer", secondTraining.getTrainer().getUser().getUsername());
     }
 
-    @Test
-    void testCreate_ShouldHandleTrainingWithMinimalData() {
-        LocalDate today = LocalDate.now();
-        Training training = createTrainingWithMinimalData(today);
-
-        Training result = dao.create(training);
-
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("Quick Session", result.getTrainingName());
-        assertEquals(today, result.getTrainingDate());
-        assertEquals(30, result.getTrainingDuration());
-        assertNotNull(result.getTrainingType());
-    }
-
-    private Training createTraining(String trainingName, String trainingTypeName, int duration) {
-        Trainee trainee = saveTrainee();
-        Trainer trainer = saveTrainer();
+    private Training createSampleTrainingWithSpecialization(String trainingName, String trainingTypeName, int duration) {
+        Trainee trainee = createSampleTrainee();
+        Trainer trainer = createSampleTrainer();
         TrainingType trainingType = trainingTypeName != null ? getExistingTrainingType(trainingTypeName) : null;
 
         return Training.builder()
@@ -112,27 +155,27 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
                 .trainer(trainer)
                 .trainingName(trainingName)
                 .trainingType(trainingType)
-                .trainingDate(LocalDate.of(2024, 1, 15))
+                .trainingDate(LocalDate.of(2024, 8, 15))
                 .trainingDuration(duration)
                 .build();
     }
 
-    private Training createTrainingWithMinimalData(LocalDate date) {
-        Trainee trainee = saveTrainee();
-        Trainer trainer = saveTrainer();
-        TrainingType defaultType = getExistingTrainingType("Cardio");
+    private Training createSampleTrainingWithMinimalData(LocalDate trainingDate) {
+        Trainee trainee = createSampleTrainee();
+        Trainer trainer = createSampleTrainer();
+        TrainingType defaultTrainingType = getExistingTrainingType("Cardio");
 
         return Training.builder()
                 .trainee(trainee)
                 .trainer(trainer)
                 .trainingName("Quick Session")
-                .trainingType(defaultType)
-                .trainingDate(date)
+                .trainingType(defaultTrainingType)
+                .trainingDate(trainingDate)
                 .trainingDuration(30)
                 .build();
     }
 
-    private Trainee saveTrainee() {
+    private Trainee createSampleTrainee() {
         return doInSession(session -> {
             User user = User.builder()
                     .firstName("John")
@@ -155,7 +198,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         });
     }
 
-    private Trainer saveTrainer() {
+    private Trainer createSampleTrainer() {
         return doInSession(session -> {
             User user = User.builder()
                     .firstName("Jane")
