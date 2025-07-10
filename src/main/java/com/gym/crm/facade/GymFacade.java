@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -51,6 +52,11 @@ public class GymFacade {
         traineeService.delete(id);
     }
 
+    public boolean changeTraineePassword(PasswordChangeRequest request) {
+        logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
+        return traineeService.changePassword(request);
+    }
+
     public TrainerResponse createTrainer(TrainerCreateRequest request) {
         logger.info("Facade: Creating trainer");
         return trainerService.create(request);
@@ -64,6 +70,11 @@ public class GymFacade {
     public TrainerResponse updateTrainer(TrainerUpdateRequest request) {
         logger.info("Facade: Updating trainer with ID: {}", request.getId());
         return trainerService.update(request);
+    }
+
+    public boolean changeTrainerPassword(PasswordChangeRequest request) {
+        logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
+        return trainerService.changePassword(request);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training) {

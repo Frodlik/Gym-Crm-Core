@@ -10,6 +10,8 @@ public interface TrainerDAO {
 
     Optional<Trainer> findById(Long id);
 
+    Optional<Trainer> findByUsername(String username);
+
     List<Trainer> findAll();
 
     Trainer update(Trainer trainer);

@@ -10,6 +10,8 @@ public interface TraineeDAO {
 
     Optional<Trainee> findById(Long id);
 
+    Optional<Trainee> findByUsername(String username);
+
     List<Trainee> findAll();
 
     Trainee update(Trainee trainee);

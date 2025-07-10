@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
@@ -98,7 +99,7 @@ public class TrainerServiceImpl implements TrainerService {
         User updatedUser = trainer.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .password(request.getPassword())
+                .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
 
@@ -112,5 +113,33 @@ public class TrainerServiceImpl implements TrainerService {
         logger.info("Successfully updated trainer with ID: {}", request.getId());
 
         return trainerMapper.toResponse(updatedTrainer);
+    }
+
+    @Override
+    public boolean changePassword(PasswordChangeRequest request) {
+        logger.debug("Changing password for trainer: {}", request.getUsername());
+
+        Trainer trainer = trainerDAO.findByUsername(request.getUsername())
+                .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
+
+        if (!trainer.getUser().getPassword().equals(request.getOldPassword())) {
+            logger.warn("Invalid old password for trainer: {}", request.getUsername());
+
+            return false;
+        }
+
+        User updatedUser = trainer.getUser().toBuilder()
+                .password(request.getNewPassword())
+                .build();
+
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDAO.update(updatedTrainer);
+
+        logger.info("Password changed successfully for trainer: {}", request.getUsername());
+
+        return true;
     }
 }

@@ -1,9 +1,10 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.dao.hibernate.TransactionHandler;
+import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,26 @@ public class TraineeDAOImpl implements TraineeDAO {
             log.debug("Found trainee with ID: {}", id);
 
             return Optional.ofNullable(trainee);
+        });
+    }
+
+    @Override
+    public Optional<Trainee> findByUsername(String username) {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
+            try {
+                Trainee trainee = entityManager.createQuery(
+                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
+                        .setParameter("username", username)
+                        .getSingleResult();
+
+                log.debug("Found trainee with username: {}", username);
+
+                return Optional.of(trainee);
+            } catch (NoResultException e) {
+                log.debug("No trainee found with username: {}", username);
+
+                return Optional.empty();
+            }
         });
     }
 

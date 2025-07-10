@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
@@ -12,4 +13,6 @@ public interface TrainerService {
     Optional<TrainerResponse> findById(Long id);
 
     TrainerResponse update(TrainerUpdateRequest request);
+
+    boolean changePassword(PasswordChangeRequest request);
 }
