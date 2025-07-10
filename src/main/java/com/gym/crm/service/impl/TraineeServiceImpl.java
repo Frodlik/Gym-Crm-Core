@@ -10,6 +10,7 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.util.UserCredentialsGenerator;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public TraineeResponse create(TraineeCreateRequest request) {
+    public TraineeResponse create(@Valid TraineeCreateRequest request) {
         logger.debug("Creating trainee: {} {}", request.getFirstName(), request.getLastName());
 
         Trainee trainee = traineeMapper.toEntity(request);
@@ -80,7 +81,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public TraineeResponse update(TraineeUpdateRequest request) {
+    public TraineeResponse update(@Valid TraineeUpdateRequest request) {
         logger.debug("Updating trainee with ID: {}", request.getId());
 
         Optional<Trainee> existingTrainee = traineeDAO.findById(request.getId());
@@ -93,6 +94,7 @@ public class TraineeServiceImpl implements TraineeService {
         User updatedUser = trainee.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .password(request.getPassword())
                 .isActive(request.getIsActive())
                 .build();
 
