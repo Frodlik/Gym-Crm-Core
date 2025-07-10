@@ -125,6 +125,35 @@ class TraineeServiceImplTest {
     }
 
     @Test
+    void findByUsername_ShouldReturnTraineeWhenExists() {
+        Trainee buildTrainee = buildTrainee();
+        TraineeResponse expected = buildTraineeResponse();
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(buildTrainee));
+        when(traineeMapper.toResponse(buildTrainee)).thenReturn(expected);
+
+        Optional<TraineeResponse> actual = service.findByUsername(USERNAME);
+
+        assertTrue(actual.isPresent());
+        assertEquals(expected.getId(), actual.get().getId());
+        assertEquals(expected.getUsername(), actual.get().getUsername());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeMapper).toResponse(buildTrainee);
+    }
+
+    @Test
+    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        Optional<TraineeResponse> actual = service.findByUsername(USERNAME);
+
+        assertFalse(actual.isPresent());
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeMapper, never()).toResponse(any());
+    }
+
+    @Test
     void update_ShouldUpdateTraineeSuccessfully() {
         TraineeUpdateRequest updateRequest = GymTestObjects.buildTraineeUpdateRequest();
         Trainee updatedTrainee = buildUpdatedTrainee();

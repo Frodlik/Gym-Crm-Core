@@ -107,6 +107,30 @@ class GymFacadeTest {
     }
 
     @Test
+    void getTraineeByUsername_ShouldCallServiceAndReturnResponse() {
+        TraineeResponse expectedResponse = buildTraineeResponse();
+
+        when(traineeService.findByUsername(USERNAME)).thenReturn(Optional.of(expectedResponse));
+
+        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME);
+
+        assertTrue(actual.isPresent());
+        assertEquals(TRAINEE_ID, actual.get().getId());
+        assertEquals(USERNAME, actual.get().getUsername());
+        verify(traineeService).findByUsername(USERNAME);
+    }
+
+    @Test
+    void getTraineeByUsername_ShouldReturnEmptyWhenNotFound() {
+        when(traineeService.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME);
+
+        assertFalse(actual.isPresent());
+        verify(traineeService).findByUsername(USERNAME);
+    }
+
+    @Test
     void updateTrainee_ShouldCallServiceAndReturnResponse() {
         TraineeUpdateRequest expected = buildTraineeUpdateRequest();
         TraineeResponse updatedResponse = buildUpdatedTraineeResponse();
@@ -184,6 +208,30 @@ class GymFacadeTest {
 
         assertFalse(actual.isPresent());
         verify(trainerService).findById(nonExistentId);
+    }
+
+    @Test
+    void getTrainerByUsername_ShouldCallServiceAndReturnResponse() {
+        TrainerResponse expectedResponse = buildTrainerResponse();
+
+        when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(expectedResponse));
+
+        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
+
+        assertTrue(actual.isPresent());
+        assertEquals(TRAINER_ID, actual.get().getId());
+        assertEquals(TRAINER_USERNAME, actual.get().getUsername());
+        verify(trainerService).findByUsername(TRAINER_USERNAME);
+    }
+
+    @Test
+    void getTrainerByUsername_ShouldReturnEmptyWhenNotFound() {
+        when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+
+        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
+
+        assertFalse(actual.isPresent());
+        verify(trainerService).findByUsername(TRAINER_USERNAME);
     }
 
     @Test
