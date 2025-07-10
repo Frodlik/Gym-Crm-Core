@@ -11,6 +11,7 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.service.TrainingService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    public TrainingResponse create(TrainingCreateRequest request) {
+    public TrainingResponse create(@Valid TrainingCreateRequest request) {
         logger.debug("Creating training: traineeId={}, trainerId={}", request.getTraineeId(), request.getTrainerId());
 
         Optional<Trainee> trainee = traineeDAO.findById(request.getTraineeId());
