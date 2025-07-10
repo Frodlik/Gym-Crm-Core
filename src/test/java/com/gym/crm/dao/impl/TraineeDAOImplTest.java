@@ -170,10 +170,12 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testDelete_ShouldReturnTrueWhenTraineeExists() {
-        boolean isDeleted = dao.delete(1L);
+    void testDeleteByUsername_ShouldReturnTrueWhenTraineeExists() {
+        String existingUsername = "emma.miller";
 
-        Optional<Trainee> trainee = dao.findById(1L);
+        boolean isDeleted = dao.deleteByUsername(existingUsername);
+
+        Optional<Trainee> trainee = dao.findByUsername(existingUsername);
 
         assertTrue(isDeleted);
         assertFalse(trainee.isPresent());
@@ -181,10 +183,10 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testDelete_ShouldReturnFalseWhenTraineeNotExists() {
-        Long nonExistentId = 999L;
+    void testDeleteByUsername_ShouldReturnFalseWhenTraineeNotExists() {
+        String nonExistentUsername = "non.existent";
 
-        boolean isDeleted = dao.delete(nonExistentId);
+        boolean isDeleted = dao.deleteByUsername(nonExistentUsername);
 
         assertFalse(isDeleted);
     }
@@ -203,7 +205,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .build();
 
         dao.update(saved1.toBuilder().user(updatedUser).build());
-        boolean isDeleted = dao.delete(saved2.getId());
+        boolean isDeleted = dao.deleteByUsername(saved2.getUser().getUsername());
 
         List<Trainee> allTrainees = dao.findAll();
 
@@ -235,7 +237,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     @Test
     @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
-        dao.delete(1L);
+        dao.deleteByUsername("emma.miller");
 
         List<Trainee> allTrainees = dao.findAll();
 

@@ -148,9 +148,9 @@ class GymFacadeTest {
 
     @Test
     void deleteTrainee_ShouldCallService() {
-        facade.deleteTrainee(TRAINEE_ID);
+        facade.deleteTrainee(TRAINER_USERNAME);
 
-        verify(traineeService).delete(TRAINEE_ID);
+        verify(traineeService).deleteByUsername(TRAINER_USERNAME);
     }
 
     @Test

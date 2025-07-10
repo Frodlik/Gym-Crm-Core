@@ -225,10 +225,25 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void delete_ShouldCallDAODelete() {
-        service.delete(TRAINEE_ID);
+    void deleteByUsername_ShouldCallDAODeleteByUsername() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
 
-        verify(traineeDAO).delete(TRAINEE_ID);
+        service.deleteByUsername(USERNAME);
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).deleteByUsername(USERNAME);
+    }
+
+    @Test
+    void deleteByUsername_ShouldThrowExceptionWhenTraineeNotFound() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.deleteByUsername(USERNAME));
+
+        assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO, never()).deleteByUsername(USERNAME);
     }
 
     private Trainee buildTrainee() {
