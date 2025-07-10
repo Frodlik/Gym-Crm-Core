@@ -93,19 +93,17 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
 
         Training actual = dao.findById(existingTrainingId).orElseThrow();
 
-        String actualTrainingTypeName = doInSession(session -> {
+        doInSession(session -> {
             Training persistedTraining = session.get(Training.class, existingTrainingId);
 
-            return persistedTraining.getTrainingType().getTrainingTypeName();
+            assertEquals(existingTrainingId, actual.getId());
+            assertEquals("Power Strength Training", actual.getTrainingName());
+            assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
+            assertEquals(75, actual.getTrainingDuration());
+            assertEquals("Strength", persistedTraining.getTrainingType().getTrainingTypeName());
+            assertEquals("alex.trainer", persistedTraining.getTrainer().getUser().getUsername());
+            assertEquals("john.trainee", persistedTraining.getTrainee().getUser().getUsername());
         });
-
-        assertEquals(existingTrainingId, actual.getId());
-        assertEquals("Power Strength Training", actual.getTrainingName());
-        assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
-        assertEquals(75, actual.getTrainingDuration());
-        assertEquals("Strength", actualTrainingTypeName);
-        assertEquals("alex.trainer", actual.getTrainer().getUser().getUsername());
-        assertEquals("john.trainee", actual.getTrainee().getUser().getUsername());
     }
 
     @Test
@@ -125,24 +123,22 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
 
         List<Training> actualTrainingsList = dao.findAll();
 
-        Training firstTraining = actualTrainingsList.stream()
-                .filter(t -> t.getTrainingName().equals("Power Strength Training"))
-                .findFirst()
-                .orElseThrow();
+        doInSession(session -> {
+            Training firstTraining = actualTrainingsList.get(0);
+            Training secondTraining = actualTrainingsList.get(1);
 
-        Training secondTraining = actualTrainingsList.stream()
-                .filter(t -> t.getTrainingName().equals("Relaxing Yoga Session"))
-                .findFirst()
-                .orElseThrow();
+            Training freshFirstTraining = session.get(Training.class, firstTraining.getId());
+            Training freshSecondTraining = session.get(Training.class, secondTraining.getId());
 
-        assertNotNull(actualTrainingsList);
-        assertEquals(expectedTrainingsCount, actualTrainingsList.size());
-        assertEquals("Power Strength Training", firstTraining.getTrainingName());
-        assertEquals(75, firstTraining.getTrainingDuration());
-        assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
-        assertEquals(90, secondTraining.getTrainingDuration());
-        assertEquals("alex.trainer", firstTraining.getTrainer().getUser().getUsername());
-        assertEquals("maria.trainer", secondTraining.getTrainer().getUser().getUsername());
+            assertNotNull(actualTrainingsList);
+            assertEquals(expectedTrainingsCount, actualTrainingsList.size());
+            assertEquals("Power Strength Training", firstTraining.getTrainingName());
+            assertEquals(75, firstTraining.getTrainingDuration());
+            assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
+            assertEquals(90, secondTraining.getTrainingDuration());
+            assertEquals("alex.trainer", freshFirstTraining.getTrainer().getUser().getUsername());
+            assertEquals("maria.trainer", freshSecondTraining.getTrainer().getUser().getUsername());
+        });
     }
 
     private Training createSampleTrainingWithSpecialization(String trainingName, String trainingTypeName, int duration) {

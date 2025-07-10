@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -169,6 +170,29 @@ class TraineeServiceImplTest {
         verify(traineeDAO).findById(updateRequest.getId());
         verify(traineeDAO, never()).update(any());
         verify(traineeMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void changePassword_ShouldUpdatePasswordWhenOldPasswordMatches() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(USERNAME);
+        request.setOldPassword(PASSWORD);
+        request.setNewPassword("newSecurePassword");
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        boolean isUpdated = service.changePassword(request);
+
+        assertTrue(isUpdated);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDAO).update(captor.capture());
+
+        Trainee updated = captor.getValue();
+        assertEquals("newSecurePassword", updated.getUser().getPassword());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).update(any(Trainee.class));
     }
 
     @Test

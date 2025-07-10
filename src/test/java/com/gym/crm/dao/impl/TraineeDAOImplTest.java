@@ -80,6 +80,31 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void findByUsername_ShouldReturnTraineeWhenExists() {
+        String existingUsername = "emma.miller";
+
+        Optional<Trainee> actual = dao.findByUsername(existingUsername);
+
+        assertTrue(actual.isPresent());
+        assertEquals("Emma", actual.get().getUser().getFirstName());
+        assertEquals("Miller", actual.get().getUser().getLastName());
+        assertEquals(existingUsername, actual.get().getUser().getUsername());
+        assertEquals("123 Main St, New York, NY 10001", actual.get().getAddress());
+        assertEquals(LocalDate.of(1990, 1, 1), actual.get().getDateOfBirth());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+        String nonExistentUsername = "non.existent";
+
+        Optional<Trainee> actual = dao.findByUsername(nonExistentUsername);
+
+        assertFalse(actual.isPresent());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindAll_ShouldReturnInitialTraineesFromDataset() {
         List<Trainee> actualTrainees = dao.findAll();
 

@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
@@ -13,6 +14,7 @@ import com.gym.crm.model.User;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -188,6 +190,29 @@ class TrainerServiceImplTest {
         verify(trainerDAO).findById(updateRequest.getId());
         verify(trainerDAO, never()).update(any());
         verify(trainerMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void changePassword_ShouldUpdatePasswordWhenOldPasswordMatches() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(TRAINER_USERNAME);
+        request.setOldPassword(PASSWORD);
+        request.setNewPassword("newSecurePassword");
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+
+        boolean isUpdated = service.changePassword(request);
+
+        assertTrue(isUpdated);
+
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDAO).update(captor.capture());
+
+        Trainer updated = captor.getValue();
+        assertEquals("newSecurePassword", updated.getUser().getPassword());
+
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO).update(any(Trainer.class));
     }
 
     private Trainer buildTrainer() {

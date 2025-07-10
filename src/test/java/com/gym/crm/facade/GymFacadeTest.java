@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -34,6 +35,7 @@ import static com.gym.crm.facade.GymTestObjects.TRAINING_ID;
 import static com.gym.crm.facade.GymTestObjects.TRAINING_NAME;
 import static com.gym.crm.facade.GymTestObjects.USERNAME;
 import static com.gym.crm.facade.GymTestObjects.YOGA_TYPE;
+import static com.gym.crm.facade.GymTestObjects.buildPasswordChangeRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTraineeCreateRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTraineeResponse;
 import static com.gym.crm.facade.GymTestObjects.buildTraineeUpdateRequest;
@@ -128,6 +130,18 @@ class GymFacadeTest {
     }
 
     @Test
+    void changeTraineePassword_ShouldDelegateToServiceAndReturnTrue() {
+        PasswordChangeRequest request = buildPasswordChangeRequest();
+
+        when(traineeService.changePassword(request)).thenReturn(true);
+
+        boolean result = facade.changeTraineePassword(request);
+
+        assertTrue(result);
+        verify(traineeService).changePassword(request);
+    }
+
+    @Test
     void createTrainer_ShouldCallServiceAndReturnResponse() {
         TrainerCreateRequest request = buildTrainerCreateRequest();
         TrainerResponse expectedResponse = buildTrainerResponse();
@@ -190,6 +204,18 @@ class GymFacadeTest {
     }
 
     @Test
+    void changeTrainerPassword_ShouldDelegateToServiceAndReturnTrue() {
+        PasswordChangeRequest request = buildPasswordChangeRequest();
+
+        when(trainerService.changePassword(request)).thenReturn(true);
+
+        boolean result = facade.changeTrainerPassword(request);
+
+        assertTrue(result);
+        verify(trainerService).changePassword(request);
+    }
+
+    @Test
     void createTraining_ShouldCallServiceAndReturnResponse() {
         TrainingCreateRequest request = buildTrainingCreateRequest();
         TrainingResponse expectedResponse = buildTrainingResponse();
@@ -244,11 +270,11 @@ class GymFacadeTest {
 
         when(mockTraineeService.findById(TRAINEE_ID)).thenReturn(Optional.of(buildTraineeResponse()));
 
-        GymFacade facade = new GymFacade(mockTraineeService, mockTrainerService, mockTrainingService);
+        GymFacade gymFacade = new GymFacade(mockTraineeService, mockTrainerService, mockTrainingService);
 
-        assertNotNull(facade);
+        assertNotNull(gymFacade);
 
-        Optional<TraineeResponse> actual = facade.getTraineeById(TRAINEE_ID);
+        Optional<TraineeResponse> actual = gymFacade.getTraineeById(TRAINEE_ID);
 
         assertTrue(actual.isPresent());
         verify(mockTraineeService).findById(TRAINEE_ID);
