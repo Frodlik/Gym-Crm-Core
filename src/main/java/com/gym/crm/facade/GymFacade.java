@@ -52,9 +52,9 @@ public class GymFacade {
         return traineeService.update(request);
     }
 
-    public void deleteTrainee(Long id) {
-        logger.info("Facade: Deleting trainee with ID: {}", id);
-        traineeService.delete(id);
+    public void deleteTrainee(String username) {
+        logger.info("Facade: Deleting trainee with username: {}", username);
+        traineeService.deleteByUsername(username);
     }
 
     public boolean changeTraineePassword(PasswordChangeRequest request) {

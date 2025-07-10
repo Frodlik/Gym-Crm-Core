@@ -16,5 +16,5 @@ public interface TraineeDAO {
 
     Trainee update(Trainee trainee);
 
-    boolean delete(Long id);
+    boolean deleteByUsername(String username);
 }

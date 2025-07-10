@@ -16,7 +16,7 @@ public interface TraineeService {
 
     TraineeResponse update(TraineeUpdateRequest request);
 
-    void delete(Long id);
+    void deleteByUsername(String username);
 
     boolean changePassword(PasswordChangeRequest request);
 }

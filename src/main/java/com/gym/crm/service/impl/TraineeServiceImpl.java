@@ -121,9 +121,15 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public void delete(Long id) {
-        logger.debug("Deleting trainee with ID: {}", id);
-        traineeDAO.delete(id);
+    public void deleteByUsername(String username) {
+        logger.debug("Deleting trainee by username: {}", username);
+
+        traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + username));
+
+        traineeDAO.deleteByUsername(username);
+
+        logger.info("Trainee deleted with username: {}", username);
     }
 
     @Override

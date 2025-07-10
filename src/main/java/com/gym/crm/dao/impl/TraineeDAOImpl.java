@@ -91,21 +91,24 @@ public class TraineeDAOImpl implements TraineeDAO {
     }
 
     @Override
-    public boolean delete(Long id) {
+    public boolean deleteByUsername(String username) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
-            Trainee trainee = entityManager.find(Trainee.class, id);
+            try {
+                Trainee trainee = entityManager.createQuery(
+                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
+                        .setParameter("username", username)
+                        .getSingleResult();
 
-            if (trainee != null) {
                 entityManager.remove(trainee);
 
-                log.info("Trainee deleted with ID: {}", id);
+                log.info("Trainee deleted with username: {}", username);
 
                 return true;
+            } catch (NoResultException e) {
+                log.warn("Trainee not found for deletion with username: {}", username);
+
+                return false;
             }
-
-            log.warn("Trainee not found for deletion with ID: {}", id);
-
-            return false;
         });
     }
 }
