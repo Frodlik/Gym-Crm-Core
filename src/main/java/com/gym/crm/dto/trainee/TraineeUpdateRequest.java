@@ -17,6 +17,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 public class TraineeUpdateRequest {
+    private static final String PASSWORD_PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$";
+
     @NotNull(message = "ID is required")
     private Long id;
 
@@ -30,7 +32,7 @@ public class TraineeUpdateRequest {
 
     @Size(min = 10, message = "Password must be at least 10 characters long")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
+            regexp = PASSWORD_PATTERN,
             message = "Password must include uppercase, lowercase letters and a number"
     )
     private String password;
