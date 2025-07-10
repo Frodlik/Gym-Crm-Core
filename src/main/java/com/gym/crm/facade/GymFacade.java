@@ -42,6 +42,11 @@ public class GymFacade {
         return traineeService.findById(id);
     }
 
+    public Optional<TraineeResponse> getTraineeByUsername(String username) {
+        logger.debug("Facade: Getting trainee by username: {}", username);
+        return traineeService.findByUsername(username);
+    }
+
     public TraineeResponse updateTrainee(TraineeUpdateRequest request) {
         logger.info("Facade: Updating trainee with ID: {}", request.getId());
         return traineeService.update(request);
@@ -65,6 +70,11 @@ public class GymFacade {
     public Optional<TrainerResponse> getTrainerById(Long id) {
         logger.debug("Facade: Getting trainer by ID: {}", id);
         return trainerService.findById(id);
+    }
+
+    public Optional<TrainerResponse> getTrainerByUsername(String username) {
+        logger.debug("Facade: Getting trainer by username: {}", username);
+        return trainerService.findByUsername(username);
     }
 
     public TrainerResponse updateTrainer(TrainerUpdateRequest request) {

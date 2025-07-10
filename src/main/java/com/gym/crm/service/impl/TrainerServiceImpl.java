@@ -86,6 +86,14 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    public Optional<TrainerResponse> findByUsername(String username) {
+        logger.debug("Finding trainer by username: {}", username);
+
+        return trainerDAO.findByUsername(username)
+                .map(trainerMapper::toResponse);
+    }
+
+    @Override
     public TrainerResponse update(@Valid TrainerUpdateRequest request) {
         logger.debug("Updating trainer with ID: {}", request.getId());
 

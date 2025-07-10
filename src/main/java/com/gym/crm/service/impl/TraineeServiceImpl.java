@@ -82,6 +82,14 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    public Optional<TraineeResponse> findByUsername(String username) {
+        logger.debug("Finding trainee by username: {}", username);
+
+        return traineeDAO.findByUsername(username)
+                .map(traineeMapper::toResponse);
+    }
+
+    @Override
     public TraineeResponse update(@Valid TraineeUpdateRequest request) {
         logger.debug("Updating trainee with ID: {}", request.getId());
 

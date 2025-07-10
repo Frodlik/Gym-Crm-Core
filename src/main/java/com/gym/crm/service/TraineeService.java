@@ -12,6 +12,8 @@ public interface TraineeService {
 
     Optional<TraineeResponse> findById(Long id);
 
+    Optional<TraineeResponse> findByUsername(String username);
+
     TraineeResponse update(TraineeUpdateRequest request);
 
     void delete(Long id);

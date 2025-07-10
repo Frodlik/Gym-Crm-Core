@@ -12,6 +12,8 @@ public interface TrainerService {
 
     Optional<TrainerResponse> findById(Long id);
 
+    Optional<TrainerResponse> findByUsername(String username);
+
     TrainerResponse update(TrainerUpdateRequest request);
 
     boolean changePassword(PasswordChangeRequest request);
