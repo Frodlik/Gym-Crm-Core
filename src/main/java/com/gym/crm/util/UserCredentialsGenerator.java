@@ -2,6 +2,8 @@ package com.gym.crm.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -19,6 +21,7 @@ public class UserCredentialsGenerator {
     private static final int PASSWORD_LENGTH = 10;
 
     private final SecureRandom random = new SecureRandom();
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public String generateUsername(String firstName, String lastName, List<String> existingUsernames) {
         String baseUsername = buildBaseUsername(firstName, lastName);
@@ -34,9 +37,15 @@ public class UserCredentialsGenerator {
 
         Collections.shuffle(characters, random);
 
-        return characters.stream()
+        String password = characters.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining());
+
+        return passwordEncoder.encode(password);
+    }
+
+    public boolean matches(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     private StringBuilder generateRawPassword() {

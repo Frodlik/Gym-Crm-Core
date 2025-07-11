@@ -9,6 +9,7 @@ import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
+import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -25,11 +26,14 @@ public class GymFacade {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+    private final AuthenticationService authenticationService;
 
-    public GymFacade(TraineeService traineeService, TrainerService trainerService, TrainingService trainingService) {
+    public GymFacade(TraineeService traineeService, TrainerService trainerService,
+                     TrainingService trainingService, AuthenticationService authenticationService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingService = trainingService;
+        this.authenticationService = authenticationService;
     }
 
     public TraineeResponse createTrainee(TraineeCreateRequest request) {
@@ -37,28 +41,27 @@ public class GymFacade {
         return traineeService.create(request);
     }
 
-    public Optional<TraineeResponse> getTraineeById(Long id) {
-        logger.debug("Facade: Getting trainee by ID: {}", id);
-        return traineeService.findById(id);
+    public Optional<TraineeResponse> getTraineeByUsername(String targetUsername, String username, String password) {
+        logger.debug("Facade: Getting trainee by username: {}", targetUsername);
+        authenticationService.validateCredentials(username, password);
+        return traineeService.findByUsername(targetUsername);
     }
 
-    public Optional<TraineeResponse> getTraineeByUsername(String username) {
-        logger.debug("Facade: Getting trainee by username: {}", username);
-        return traineeService.findByUsername(username);
-    }
-
-    public TraineeResponse updateTrainee(TraineeUpdateRequest request) {
+    public TraineeResponse updateTrainee(TraineeUpdateRequest request, String username, String password) {
         logger.info("Facade: Updating trainee with ID: {}", request.getId());
+        authenticationService.validateTraineeCredentials(username, password);
         return traineeService.update(request);
     }
 
-    public void deleteTrainee(String username) {
-        logger.info("Facade: Deleting trainee with username: {}", username);
-        traineeService.deleteByUsername(username);
+    public void deleteTrainee(String targetUsername, String username, String password) {
+        logger.info("Facade: Deleting trainee with username: {}", targetUsername);
+        authenticationService.validateTraineeCredentials(username, password);
+        traineeService.deleteByUsername(targetUsername);
     }
 
     public void changeTraineePassword(PasswordChangeRequest request) {
         logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
+        authenticationService.validateTraineeCredentials(request.getUsername(), request.getOldPassword());
         traineeService.changePassword(request);
     }
 
@@ -67,33 +70,33 @@ public class GymFacade {
         return trainerService.create(request);
     }
 
-    public Optional<TrainerResponse> getTrainerById(Long id) {
-        logger.debug("Facade: Getting trainer by ID: {}", id);
-        return trainerService.findById(id);
+    public Optional<TrainerResponse> getTrainerByUsername(String targetUsername, String username, String password) {
+        logger.debug("Facade: Getting trainer by username: {}", targetUsername);
+        authenticationService.validateCredentials(username, password);
+        return trainerService.findByUsername(targetUsername);
     }
 
-    public Optional<TrainerResponse> getTrainerByUsername(String username) {
-        logger.debug("Facade: Getting trainer by username: {}", username);
-        return trainerService.findByUsername(username);
-    }
-
-    public TrainerResponse updateTrainer(TrainerUpdateRequest request) {
+    public TrainerResponse updateTrainer(TrainerUpdateRequest request, String password) {
         logger.info("Facade: Updating trainer with ID: {}", request.getId());
+        authenticationService.validateTrainerCredentials(request.getUsername(), password);
         return trainerService.update(request);
     }
 
     public void changeTrainerPassword(PasswordChangeRequest request) {
         logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
+        authenticationService.validateTrainerCredentials(request.getUsername(), request.getOldPassword());
         trainerService.changePassword(request);
     }
 
-    public TrainingResponse createTraining(TrainingCreateRequest training) {
+    public TrainingResponse createTraining(TrainingCreateRequest training, String username, String password) {
         logger.info("Facade: Creating training");
+        authenticationService.validateCredentials(username, password);
         return trainingService.create(training);
     }
 
-    public Optional<TrainingResponse> getTrainingById(Long id) {
+    public Optional<TrainingResponse> getTrainingById(Long id, String username, String password) {
         logger.debug("Facade: Getting training by ID: {}", id);
+        authenticationService.validateCredentials(username, password);
         return trainingService.findById(id);
     }
 }
