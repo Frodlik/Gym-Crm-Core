@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -41,14 +42,24 @@ public class GymFacade {
         return traineeService.findById(id);
     }
 
+    public Optional<TraineeResponse> getTraineeByUsername(String username) {
+        logger.debug("Facade: Getting trainee by username: {}", username);
+        return traineeService.findByUsername(username);
+    }
+
     public TraineeResponse updateTrainee(TraineeUpdateRequest request) {
         logger.info("Facade: Updating trainee with ID: {}", request.getId());
         return traineeService.update(request);
     }
 
-    public void deleteTrainee(Long id) {
-        logger.info("Facade: Deleting trainee with ID: {}", id);
-        traineeService.delete(id);
+    public void deleteTrainee(String username) {
+        logger.info("Facade: Deleting trainee with username: {}", username);
+        traineeService.deleteByUsername(username);
+    }
+
+    public void changeTraineePassword(PasswordChangeRequest request) {
+        logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
+        traineeService.changePassword(request);
     }
 
     public TrainerResponse createTrainer(TrainerCreateRequest request) {
@@ -61,9 +72,19 @@ public class GymFacade {
         return trainerService.findById(id);
     }
 
+    public Optional<TrainerResponse> getTrainerByUsername(String username) {
+        logger.debug("Facade: Getting trainer by username: {}", username);
+        return trainerService.findByUsername(username);
+    }
+
     public TrainerResponse updateTrainer(TrainerUpdateRequest request) {
         logger.info("Facade: Updating trainer with ID: {}", request.getId());
         return trainerService.update(request);
+    }
+
+    public void changeTrainerPassword(PasswordChangeRequest request) {
+        logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
+        trainerService.changePassword(request);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training) {

@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -124,6 +125,35 @@ class TraineeServiceImplTest {
     }
 
     @Test
+    void findByUsername_ShouldReturnTraineeWhenExists() {
+        Trainee buildTrainee = buildTrainee();
+        TraineeResponse expected = buildTraineeResponse();
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(buildTrainee));
+        when(traineeMapper.toResponse(buildTrainee)).thenReturn(expected);
+
+        Optional<TraineeResponse> actual = service.findByUsername(USERNAME);
+
+        assertTrue(actual.isPresent());
+        assertEquals(expected.getId(), actual.get().getId());
+        assertEquals(expected.getUsername(), actual.get().getUsername());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeMapper).toResponse(buildTrainee);
+    }
+
+    @Test
+    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        Optional<TraineeResponse> actual = service.findByUsername(USERNAME);
+
+        assertFalse(actual.isPresent());
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeMapper, never()).toResponse(any());
+    }
+
+    @Test
     void update_ShouldUpdateTraineeSuccessfully() {
         TraineeUpdateRequest updateRequest = GymTestObjects.buildTraineeUpdateRequest();
         Trainee updatedTrainee = buildUpdatedTrainee();
@@ -172,10 +202,45 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void delete_ShouldCallDAODelete() {
-        service.delete(TRAINEE_ID);
+    void changePassword_ShouldUpdatePasswordWhenOldPasswordMatches() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(USERNAME);
+        request.setOldPassword(PASSWORD);
+        request.setNewPassword("newSecurePassword");
 
-        verify(traineeDAO).delete(TRAINEE_ID);
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.changePassword(request);
+
+        verify(traineeDAO).update(captor.capture());
+
+        Trainee updated = captor.getValue();
+        assertEquals("newSecurePassword", updated.getUser().getPassword());
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).update(any(Trainee.class));
+    }
+
+    @Test
+    void deleteByUsername_ShouldCallDAODeleteByUsername() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.deleteByUsername(USERNAME);
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).deleteByUsername(USERNAME);
+    }
+
+    @Test
+    void deleteByUsername_ShouldThrowExceptionWhenTraineeNotFound() {
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.deleteByUsername(USERNAME));
+
+        assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO, never()).deleteByUsername(USERNAME);
     }
 
     private Trainee buildTrainee() {

@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
@@ -63,7 +64,6 @@ public class TrainerServiceImpl implements TrainerService {
                 .password(password)
                 .isActive(true)
                 .build();
-
         trainer = Trainer.builder()
                 .user(user)
                 .specialization(request.getSpecialization())
@@ -85,6 +85,14 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    public Optional<TrainerResponse> findByUsername(String username) {
+        logger.debug("Finding trainer by username: {}", username);
+
+        return trainerDAO.findByUsername(username)
+                .map(trainerMapper::toResponse);
+    }
+
+    @Override
     public TrainerResponse update(@Valid TrainerUpdateRequest request) {
         logger.debug("Updating trainer with ID: {}", request.getId());
 
@@ -98,10 +106,9 @@ public class TrainerServiceImpl implements TrainerService {
         User updatedUser = trainer.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .password(request.getPassword())
+                .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
-
         trainer = trainer.toBuilder()
                 .user(updatedUser)
                 .specialization(request.getSpecialization())
@@ -112,5 +119,28 @@ public class TrainerServiceImpl implements TrainerService {
         logger.info("Successfully updated trainer with ID: {}", request.getId());
 
         return trainerMapper.toResponse(updatedTrainer);
+    }
+
+    @Override
+    public void changePassword(PasswordChangeRequest request) {
+        logger.debug("Changing password for trainer: {}", request.getUsername());
+
+        Trainer trainer = trainerDAO.findByUsername(request.getUsername())
+                .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
+
+        if (!trainer.getUser().getPassword().equals(request.getOldPassword())) {
+            throw new CoreServiceException("Invalid old password");
+        }
+
+        User updatedUser = trainer.getUser().toBuilder()
+                .password(request.getNewPassword())
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDAO.update(updatedTrainer);
+
+        logger.info("Password changed successfully for trainer: {}", request.getUsername());
     }
 }

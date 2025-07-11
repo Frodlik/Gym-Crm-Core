@@ -108,6 +108,31 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void findByUsername_ShouldReturnTrainerWhenExists() {
+        String existingUsername = "anna.davis";
+
+        Optional<Trainer> actual = dao.findByUsername(existingUsername);
+
+        assertTrue(actual.isPresent());
+
+        Trainer trainer = actual.get();
+        assertEquals("Anna", trainer.getUser().getFirstName());
+        assertEquals("Davis", trainer.getUser().getLastName());
+        assertEquals(existingUsername, trainer.getUser().getUsername());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+        String nonExistentUsername = "non.existent";
+
+        Optional<Trainer> actual = dao.findByUsername(nonExistentUsername);
+
+        assertFalse(actual.isPresent());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindAll_ShouldReturnAllExistingTrainers() {
         int expectedTrainersCount = 3;
 

@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -11,7 +12,11 @@ public interface TraineeService {
 
     Optional<TraineeResponse> findById(Long id);
 
+    Optional<TraineeResponse> findByUsername(String username);
+
     TraineeResponse update(TraineeUpdateRequest request);
 
-    void delete(Long id);
+    void deleteByUsername(String username);
+
+    void changePassword(PasswordChangeRequest request);
 }

@@ -6,6 +6,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Component
@@ -24,6 +25,20 @@ public class TransactionHandler {
             T result = sessionFunction.apply(session);
             session.getTransaction().commit();
             return result;
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            throw new TransactionHandlerException("Error performing Hibernate operation. Transaction is rolled back", e);
+        } finally {
+            session.close();
+        }
+    }
+
+    public void performWithinSession(Consumer<Session> sessionConsumer) {
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+        try {
+            sessionConsumer.accept(session);
+            session.getTransaction().commit();
         } catch (Exception e) {
             session.getTransaction().rollback();
             throw new TransactionHandlerException("Error performing Hibernate operation. Transaction is rolled back", e);

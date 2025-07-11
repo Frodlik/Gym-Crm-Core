@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
@@ -13,6 +14,7 @@ import com.gym.crm.model.User;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import static com.gym.crm.facade.GymTestObjects.buildTrainerResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -71,7 +74,7 @@ class TrainerServiceImplTest {
                 .user(userWithCredentials)
                 .build();
 
-        TrainerResponse expected = GymTestObjects.buildTrainerResponse();
+        TrainerResponse expected = buildTrainerResponse();
 
         when(trainerMapper.toEntity(createRequest)).thenReturn(initialTrainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
@@ -101,7 +104,7 @@ class TrainerServiceImplTest {
         TrainerCreateRequest createRequest = GymTestObjects.buildTrainerCreateRequest();
         List<Trainer> existingTrainers = List.of();
         List<String> existingUsernames = List.of();
-        TrainerResponse expectedResponse = GymTestObjects.buildTrainerResponse();
+        TrainerResponse expectedResponse = buildTrainerResponse();
 
         when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
@@ -120,7 +123,7 @@ class TrainerServiceImplTest {
 
     @Test
     void findById_ShouldReturnTrainerWhenExists() {
-        TrainerResponse expected = GymTestObjects.buildTrainerResponse();
+        TrainerResponse expected = buildTrainerResponse();
 
         when(trainerDAO.findById(TRAINER_ID)).thenReturn(Optional.of(trainer));
         when(trainerMapper.toResponse(trainer)).thenReturn(expected);
@@ -147,6 +150,35 @@ class TrainerServiceImplTest {
         assertFalse(result.isPresent());
 
         verify(trainerDAO).findById(trainerId);
+        verify(trainerMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void findByUsername_ShouldReturnTrainerWhenExists() {
+        Trainer buildTrainer = buildTrainer();
+        TrainerResponse expected = buildTrainerResponse();
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(buildTrainer));
+        when(trainerMapper.toResponse(buildTrainer)).thenReturn(expected);
+
+        Optional<TrainerResponse> actual = service.findByUsername(TRAINER_USERNAME);
+
+        assertTrue(actual.isPresent());
+        assertEquals(expected.getId(), actual.get().getId());
+        assertEquals(expected.getUsername(), actual.get().getUsername());
+
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerMapper).toResponse(buildTrainer);
+    }
+
+    @Test
+    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+
+        Optional<TrainerResponse> actual = service.findByUsername(TRAINER_USERNAME);
+
+        assertFalse(actual.isPresent());
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerMapper, never()).toResponse(any());
     }
 
@@ -188,6 +220,26 @@ class TrainerServiceImplTest {
         verify(trainerDAO).findById(updateRequest.getId());
         verify(trainerDAO, never()).update(any());
         verify(trainerMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void changePassword_ShouldUpdatePasswordWhenOldPasswordMatches() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(TRAINER_USERNAME);
+        request.setOldPassword(PASSWORD);
+        request.setNewPassword("newSecurePassword");
+
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+
+        service.changePassword(request);
+
+        verify(trainerDAO).update(captor.capture());
+
+        Trainer updated = captor.getValue();
+        assertEquals("newSecurePassword", updated.getUser().getPassword());
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO).update(any(Trainer.class));
     }
 
     private Trainer buildTrainer() {

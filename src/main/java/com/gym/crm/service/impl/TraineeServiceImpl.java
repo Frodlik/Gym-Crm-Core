@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -53,14 +54,16 @@ public class TraineeServiceImpl implements TraineeService {
                 .toList();
 
         String username = userCredentialsGenerator.generateUsername(
-                trainee.getUser().getFirstName(), trainee.getUser().getLastName(), existingUsernames);
+                request.getFirstName(), request.getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        User updatedUser = trainee.getUser().toBuilder()
+        User updatedUser = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .username(username)
                 .password(password)
+                .isActive(true)
                 .build();
-
         trainee = trainee.toBuilder()
                 .user(updatedUser)
                 .build();
@@ -81,6 +84,14 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    public Optional<TraineeResponse> findByUsername(String username) {
+        logger.debug("Finding trainee by username: {}", username);
+
+        return traineeDAO.findByUsername(username)
+                .map(traineeMapper::toResponse);
+    }
+
+    @Override
     public TraineeResponse update(@Valid TraineeUpdateRequest request) {
         logger.debug("Updating trainee with ID: {}", request.getId());
 
@@ -94,10 +105,9 @@ public class TraineeServiceImpl implements TraineeService {
         User updatedUser = trainee.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .password(request.getPassword())
+                .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
-
         trainee = trainee.toBuilder()
                 .user(updatedUser)
                 .dateOfBirth(request.getDateOfBirth())
@@ -112,8 +122,37 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public void delete(Long id) {
-        logger.debug("Deleting trainee with ID: {}", id);
-        traineeDAO.delete(id);
+    public void deleteByUsername(String username) {
+        logger.debug("Deleting trainee by username: {}", username);
+
+        traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + username));
+
+        traineeDAO.deleteByUsername(username);
+
+        logger.info("Trainee deleted with username: {}", username);
+    }
+
+    @Override
+    public void changePassword(PasswordChangeRequest request) {
+        logger.debug("Changing password for trainee: {}", request.getUsername());
+
+        Trainee trainee = traineeDAO.findByUsername(request.getUsername())
+                .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
+
+        if (!trainee.getUser().getPassword().equals(request.getOldPassword())) {
+            throw new CoreServiceException("Invalid old password");
+        }
+
+        User updatedUser = trainee.getUser().toBuilder()
+                .password(request.getNewPassword())
+                .build();
+        Trainee updatedTrainee = trainee.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        traineeDAO.update(updatedTrainee);
+
+        logger.info("Password changed successfully for trainee: {}", request.getUsername());
     }
 }

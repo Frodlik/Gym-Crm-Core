@@ -1,9 +1,10 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.dao.hibernate.TransactionHandler;
+import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,26 @@ public class TraineeDAOImpl implements TraineeDAO {
     }
 
     @Override
+    public Optional<Trainee> findByUsername(String username) {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
+            try {
+                Trainee trainee = entityManager.createQuery(
+                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
+                        .setParameter("username", username)
+                        .getSingleResult();
+
+                log.debug("Found trainee with username: {}", username);
+
+                return Optional.of(trainee);
+            } catch (NoResultException e) {
+                log.debug("No trainee found with username: {}", username);
+
+                return Optional.empty();
+            }
+        });
+    }
+
+    @Override
     public List<Trainee> findAll() {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             List<Trainee> trainees = entityManager.createQuery("FROM Trainee", Trainee.class)
@@ -70,21 +91,20 @@ public class TraineeDAOImpl implements TraineeDAO {
     }
 
     @Override
-    public boolean delete(Long id) {
-        return transactionHandler.performReturningWithinSession(entityManager -> {
-            Trainee trainee = entityManager.find(Trainee.class, id);
+    public void deleteByUsername(String username) {
+        transactionHandler.performWithinSession(entityManager -> {
+            try {
+                Trainee trainee = entityManager.createQuery(
+                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
+                        .setParameter("username", username)
+                        .getSingleResult();
 
-            if (trainee != null) {
                 entityManager.remove(trainee);
 
-                log.info("Trainee deleted with ID: {}", id);
-
-                return true;
+                log.info("Trainee deleted with username: {}", username);
+            } catch (NoResultException e) {
+                log.warn("Trainee not found for deletion with username: {}", username);
             }
-
-            log.warn("Trainee not found for deletion with ID: {}", id);
-
-            return false;
         });
     }
 }

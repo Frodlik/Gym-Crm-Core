@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
@@ -119,5 +120,14 @@ public class GymTestObjects {
         response.setTrainingDuration(TRAINING_DURATION);
 
         return response;
+    }
+
+    public static PasswordChangeRequest buildPasswordChangeRequest() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(USERNAME);
+        request.setOldPassword("oldPassword");
+        request.setNewPassword("newPassword");
+
+        return request;
     }
 }

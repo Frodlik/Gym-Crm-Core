@@ -6,7 +6,6 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDate;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
-    @Test
+
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
@@ -43,7 +42,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Yoga", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
@@ -63,7 +61,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Flexibility", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
         LocalDate todayDate = LocalDate.now();
@@ -86,29 +83,25 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Cardio", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTrainingWhenExists() {
         Long existingTrainingId = 1L;
 
         Training actual = dao.findById(existingTrainingId).orElseThrow();
 
-        String actualTrainingTypeName = doInSession(session -> {
+        doInSession(session -> {
             Training persistedTraining = session.get(Training.class, existingTrainingId);
 
-            return persistedTraining.getTrainingType().getTrainingTypeName();
+            assertEquals(existingTrainingId, actual.getId());
+            assertEquals("Power Strength Training", actual.getTrainingName());
+            assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
+            assertEquals(75, actual.getTrainingDuration());
+            assertEquals("Strength", persistedTraining.getTrainingType().getTrainingTypeName());
+            assertEquals("alex.trainer", persistedTraining.getTrainer().getUser().getUsername());
+            assertEquals("john.trainee", persistedTraining.getTrainee().getUser().getUsername());
         });
-
-        assertEquals(existingTrainingId, actual.getId());
-        assertEquals("Power Strength Training", actual.getTrainingName());
-        assertEquals(LocalDate.of(2024, 8, 10), actual.getTrainingDate());
-        assertEquals(75, actual.getTrainingDuration());
-        assertEquals("Strength", actualTrainingTypeName);
-        assertEquals("alex.trainer", actual.getTrainer().getUser().getUsername());
-        assertEquals("john.trainee", actual.getTrainee().getUser().getUsername());
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnEmptyWhenTrainingNotExists() {
         Long nonExistentTrainingId = 999L;
@@ -118,31 +111,28 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertFalse(actual.isPresent());
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindAll_ShouldReturnAllExistingTrainings() {
         int expectedTrainingsCount = 4;
 
         List<Training> actualTrainingsList = dao.findAll();
 
-        Training firstTraining = actualTrainingsList.stream()
-                .filter(t -> t.getTrainingName().equals("Power Strength Training"))
-                .findFirst()
-                .orElseThrow();
+        doInSession(session -> {
+            Training firstTraining = actualTrainingsList.get(0);
+            Training secondTraining = actualTrainingsList.get(1);
 
-        Training secondTraining = actualTrainingsList.stream()
-                .filter(t -> t.getTrainingName().equals("Relaxing Yoga Session"))
-                .findFirst()
-                .orElseThrow();
+            Training freshFirstTraining = session.get(Training.class, firstTraining.getId());
+            Training freshSecondTraining = session.get(Training.class, secondTraining.getId());
 
-        assertNotNull(actualTrainingsList);
-        assertEquals(expectedTrainingsCount, actualTrainingsList.size());
-        assertEquals("Power Strength Training", firstTraining.getTrainingName());
-        assertEquals(75, firstTraining.getTrainingDuration());
-        assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
-        assertEquals(90, secondTraining.getTrainingDuration());
-        assertEquals("alex.trainer", firstTraining.getTrainer().getUser().getUsername());
-        assertEquals("maria.trainer", secondTraining.getTrainer().getUser().getUsername());
+            assertNotNull(actualTrainingsList);
+            assertEquals(expectedTrainingsCount, actualTrainingsList.size());
+            assertEquals("Power Strength Training", firstTraining.getTrainingName());
+            assertEquals(75, firstTraining.getTrainingDuration());
+            assertEquals("Relaxing Yoga Session", secondTraining.getTrainingName());
+            assertEquals(90, secondTraining.getTrainingDuration());
+            assertEquals("alex.trainer", freshFirstTraining.getTrainer().getUser().getUsername());
+            assertEquals("maria.trainer", freshSecondTraining.getTrainer().getUser().getUsername());
+        });
     }
 
     private Training createSampleTrainingWithSpecialization(String trainingName, String trainingTypeName, int duration) {

@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 public class TrainerUpdateRequest {
-    private static final String PASSWORD_PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$";
+    private static final String USERNAME_PATTERN = "^[a-zA-Z]+\\.[a-zA-Z]+$";
 
     @NotNull(message = "ID is required")
     private Long id;
@@ -28,12 +28,12 @@ public class TrainerUpdateRequest {
     @Size(max = 50, message = "Last name must be at most 50 characters")
     private String lastName;
 
-    @Size(min = 10, message = "Password must be at least 10 characters long")
+    @NotBlank(message = "Username is required")
     @Pattern(
-            regexp = PASSWORD_PATTERN,
-            message = "Password must include uppercase, lowercase letters and a number"
+            regexp = USERNAME_PATTERN,
+            message = "Username must be in the format 'firstname.lastname'"
     )
-    private String password;
+    private String username;
 
     @NotNull(message = "Active status is required")
     private Boolean isActive;
