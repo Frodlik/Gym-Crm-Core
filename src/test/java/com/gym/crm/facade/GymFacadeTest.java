@@ -157,11 +157,8 @@ class GymFacadeTest {
     void changeTraineePassword_ShouldDelegateToServiceAndReturnTrue() {
         PasswordChangeRequest request = buildPasswordChangeRequest();
 
-        when(traineeService.changePassword(request)).thenReturn(true);
+        facade.changeTraineePassword(request);
 
-        boolean result = facade.changeTraineePassword(request);
-
-        assertTrue(result);
         verify(traineeService).changePassword(request);
     }
 
@@ -255,11 +252,8 @@ class GymFacadeTest {
     void changeTrainerPassword_ShouldDelegateToServiceAndReturnTrue() {
         PasswordChangeRequest request = buildPasswordChangeRequest();
 
-        when(trainerService.changePassword(request)).thenReturn(true);
+        facade.changeTrainerPassword(request);
 
-        boolean result = facade.changeTrainerPassword(request);
-
-        assertTrue(result);
         verify(trainerService).changePassword(request);
     }
 

@@ -16,5 +16,5 @@ public interface TrainerService {
 
     TrainerResponse update(TrainerUpdateRequest request);
 
-    boolean changePassword(PasswordChangeRequest request);
+    void changePassword(PasswordChangeRequest request);
 }

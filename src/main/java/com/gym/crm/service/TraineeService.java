@@ -18,5 +18,5 @@ public interface TraineeService {
 
     void deleteByUsername(String username);
 
-    boolean changePassword(PasswordChangeRequest request);
+    void changePassword(PasswordChangeRequest request);
 }

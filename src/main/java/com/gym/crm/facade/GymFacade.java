@@ -57,9 +57,9 @@ public class GymFacade {
         traineeService.deleteByUsername(username);
     }
 
-    public boolean changeTraineePassword(PasswordChangeRequest request) {
+    public void changeTraineePassword(PasswordChangeRequest request) {
         logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
-        return traineeService.changePassword(request);
+        traineeService.changePassword(request);
     }
 
     public TrainerResponse createTrainer(TrainerCreateRequest request) {
@@ -82,9 +82,9 @@ public class GymFacade {
         return trainerService.update(request);
     }
 
-    public boolean changeTrainerPassword(PasswordChangeRequest request) {
+    public void changeTrainerPassword(PasswordChangeRequest request) {
         logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
-        return trainerService.changePassword(request);
+        trainerService.changePassword(request);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training) {

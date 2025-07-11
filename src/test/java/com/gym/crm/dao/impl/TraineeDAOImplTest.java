@@ -173,11 +173,10 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     void testDeleteByUsername_ShouldReturnTrueWhenTraineeExists() {
         String existingUsername = "emma.miller";
 
-        boolean isDeleted = dao.deleteByUsername(existingUsername);
+        dao.deleteByUsername(existingUsername);
 
         Optional<Trainee> trainee = dao.findByUsername(existingUsername);
 
-        assertTrue(isDeleted);
         assertFalse(trainee.isPresent());
     }
 
@@ -186,9 +185,10 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     void testDeleteByUsername_ShouldReturnFalseWhenTraineeNotExists() {
         String nonExistentUsername = "non.existent";
 
-        boolean isDeleted = dao.deleteByUsername(nonExistentUsername);
+        dao.deleteByUsername(nonExistentUsername);
 
-        assertFalse(isDeleted);
+        List<Trainee> trainees = dao.findAll();
+        assertEquals(1, trainees.size());
     }
 
     @Test
@@ -205,7 +205,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .build();
 
         dao.update(saved1.toBuilder().user(updatedUser).build());
-        boolean isDeleted = dao.deleteByUsername(saved2.getUser().getUsername());
+        dao.deleteByUsername(saved2.getUser().getUsername());
 
         List<Trainee> allTrainees = dao.findAll();
 
@@ -219,7 +219,6 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
 
         assertTrue(updated.isPresent());
         assertEquals("John Updated", updated.get().getUser().getFirstName());
-        assertTrue(isDeleted);
         assertFalse(deletedCheck.isPresent());
     }
 

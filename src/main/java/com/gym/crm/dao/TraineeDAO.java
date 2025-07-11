@@ -16,5 +16,5 @@ public interface TraineeDAO {
 
     Trainee update(Trainee trainee);
 
-    boolean deleteByUsername(String username);
+    void deleteByUsername(String username);
 }

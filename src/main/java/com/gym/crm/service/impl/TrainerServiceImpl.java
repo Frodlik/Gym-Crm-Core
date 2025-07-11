@@ -64,7 +64,6 @@ public class TrainerServiceImpl implements TrainerService {
                 .password(password)
                 .isActive(true)
                 .build();
-
         trainer = Trainer.builder()
                 .user(user)
                 .specialization(request.getSpecialization())
@@ -110,7 +109,6 @@ public class TrainerServiceImpl implements TrainerService {
                 .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
-
         trainer = trainer.toBuilder()
                 .user(updatedUser)
                 .specialization(request.getSpecialization())
@@ -124,22 +122,19 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    public boolean changePassword(PasswordChangeRequest request) {
+    public void changePassword(PasswordChangeRequest request) {
         logger.debug("Changing password for trainer: {}", request.getUsername());
 
         Trainer trainer = trainerDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!trainer.getUser().getPassword().equals(request.getOldPassword())) {
-            logger.warn("Invalid old password for trainer: {}", request.getUsername());
-
-            return false;
+            throw new CoreServiceException("Invalid old password");
         }
 
         User updatedUser = trainer.getUser().toBuilder()
                 .password(request.getNewPassword())
                 .build();
-
         Trainer updatedTrainer = trainer.toBuilder()
                 .user(updatedUser)
                 .build();
@@ -147,7 +142,5 @@ public class TrainerServiceImpl implements TrainerService {
         trainerDAO.update(updatedTrainer);
 
         logger.info("Password changed successfully for trainer: {}", request.getUsername());
-
-        return true;
     }
 }

@@ -91,8 +91,8 @@ public class TraineeDAOImpl implements TraineeDAO {
     }
 
     @Override
-    public boolean deleteByUsername(String username) {
-        return transactionHandler.performReturningWithinSession(entityManager -> {
+    public void deleteByUsername(String username) {
+        transactionHandler.performWithinSession(entityManager -> {
             try {
                 Trainee trainee = entityManager.createQuery(
                                 "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
@@ -102,12 +102,8 @@ public class TraineeDAOImpl implements TraineeDAO {
                 entityManager.remove(trainee);
 
                 log.info("Trainee deleted with username: {}", username);
-
-                return true;
             } catch (NoResultException e) {
                 log.warn("Trainee not found for deletion with username: {}", username);
-
-                return false;
             }
         });
     }

@@ -229,18 +229,15 @@ class TrainerServiceImplTest {
         request.setOldPassword(PASSWORD);
         request.setNewPassword("newSecurePassword");
 
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
 
-        boolean isUpdated = service.changePassword(request);
+        service.changePassword(request);
 
-        assertTrue(isUpdated);
-
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         verify(trainerDAO).update(captor.capture());
 
         Trainer updated = captor.getValue();
         assertEquals("newSecurePassword", updated.getUser().getPassword());
-
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO).update(any(Trainer.class));
     }

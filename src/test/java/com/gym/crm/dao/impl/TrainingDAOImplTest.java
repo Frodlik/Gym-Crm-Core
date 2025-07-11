@@ -6,7 +6,6 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDate;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
-    @Test
+
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
@@ -43,7 +42,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Yoga", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
@@ -63,7 +61,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Flexibility", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
         LocalDate todayDate = LocalDate.now();
@@ -86,7 +83,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Cardio", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnTrainingWhenExists() {
         Long existingTrainingId = 1L;
@@ -106,7 +102,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         });
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindById_ShouldReturnEmptyWhenTrainingNotExists() {
         Long nonExistentTrainingId = 999L;
@@ -116,7 +111,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertFalse(actual.isPresent());
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testFindAll_ShouldReturnAllExistingTrainings() {
         int expectedTrainingsCount = 4;

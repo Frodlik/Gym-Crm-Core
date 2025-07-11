@@ -54,14 +54,16 @@ public class TraineeServiceImpl implements TraineeService {
                 .toList();
 
         String username = userCredentialsGenerator.generateUsername(
-                trainee.getUser().getFirstName(), trainee.getUser().getLastName(), existingUsernames);
+                request.getFirstName(), request.getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        User updatedUser = trainee.getUser().toBuilder()
+        User updatedUser = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .username(username)
                 .password(password)
+                .isActive(true)
                 .build();
-
         trainee = trainee.toBuilder()
                 .user(updatedUser)
                 .build();
@@ -106,7 +108,6 @@ public class TraineeServiceImpl implements TraineeService {
                 .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
-
         trainee = trainee.toBuilder()
                 .user(updatedUser)
                 .dateOfBirth(request.getDateOfBirth())
@@ -133,22 +134,19 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public boolean changePassword(PasswordChangeRequest request) {
+    public void changePassword(PasswordChangeRequest request) {
         logger.debug("Changing password for trainee: {}", request.getUsername());
 
         Trainee trainee = traineeDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!trainee.getUser().getPassword().equals(request.getOldPassword())) {
-            logger.warn("Invalid old password for trainee: {}", request.getUsername());
-
-            return false;
+            throw new CoreServiceException("Invalid old password");
         }
 
         User updatedUser = trainee.getUser().toBuilder()
                 .password(request.getNewPassword())
                 .build();
-
         Trainee updatedTrainee = trainee.toBuilder()
                 .user(updatedUser)
                 .build();
@@ -156,7 +154,5 @@ public class TraineeServiceImpl implements TraineeService {
         traineeDAO.update(updatedTrainee);
 
         logger.info("Password changed successfully for trainee: {}", request.getUsername());
-
-        return true;
     }
 }
