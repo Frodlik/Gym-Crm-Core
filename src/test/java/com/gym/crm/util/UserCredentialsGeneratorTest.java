@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -27,8 +26,6 @@ class UserCredentialsGeneratorTest {
     private static final String LAST_NAME = "Doe";
     private static final String EXPECTED_USERNAME = "John.Doe";
     private static final String EXPECTED_USERNAME_WITH_SUFFIX = "John.Doe1";
-    private static final int PASSWORD_LENGTH = 10;
-    private static final Pattern VALID_CHARACTERS_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
 
     private UserCredentialsGenerator sut;
 
@@ -85,18 +82,24 @@ class UserCredentialsGeneratorTest {
     }
 
     @Test
-    void generatePassword_ShouldGeneratePasswordWithCorrectLength() {
-        String actual = sut.generatePassword();
+    void generatePassword_ShouldReturnValidBCryptHash() {
+        String hashedPassword = sut.generatePassword();
 
-        assertNotNull(actual);
-        assertEquals(PASSWORD_LENGTH, actual.length());
+        assertNotNull(hashedPassword);
+        assertFalse(hashedPassword.isBlank());
+        assertTrue(hashedPassword.startsWith("$2"));
+        assertTrue(hashedPassword.length() >= 60);
     }
 
     @Test
-    void generatePassword_ShouldGeneratePasswordWithValidCharacters() {
-        String actual = sut.generatePassword();
+    void generatePassword_ShouldBeDifferentEachTime() {
+        String hash1 = sut.generatePassword();
+        String hash2 = sut.generatePassword();
+        String hash3 = sut.generatePassword();
 
-        assertTrue(VALID_CHARACTERS_PATTERN.matcher(actual).matches());
+        assertNotEquals(hash1, hash2);
+        assertNotEquals(hash2, hash3);
+        assertNotEquals(hash1, hash3);
     }
 
     @Test
