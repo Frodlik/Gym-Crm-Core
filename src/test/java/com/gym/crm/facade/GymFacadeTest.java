@@ -3,9 +3,11 @@ package com.gym.crm.facade;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
@@ -20,6 +22,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static com.gym.crm.facade.GymTestObjects.FIRST_NAME;
@@ -281,6 +285,71 @@ class GymFacadeTest {
 
         assertTrue(actual.isPresent());
         verify(mockAuthenticationService).validateCredentials(USERNAME, PASSWORD);
+    }
+
+    @Test
+    void getTraineeTrainingsByCriteria_ShouldCallServiceAndReturnResponse() {
+        TraineeTrainingCriteriaRequest request = new TraineeTrainingCriteriaRequest();
+        request.setTraineeUsername(USERNAME);
+        request.setFromDate(LocalDate.of(2024, 1, 1));
+        request.setToDate(LocalDate.of(2024, 12, 31));
+        request.setTrainerName("Mike");
+        request.setTrainingType("Fitness");
+
+        TrainingResponse expected = buildTrainingResponse();
+
+        when(trainingService.getTraineeTrainingsByCriteria(
+                request.getTraineeUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTrainerName(),
+                request.getTrainingType()
+        )).thenReturn(List.of(expected));
+
+        List<TrainingResponse> actual = facade.getTraineeTrainingsByCriteria(request, USERNAME, PASSWORD);
+
+        assertEquals(1, actual.size());
+        assertEquals(expected, actual.get(0));
+
+        verify(authenticationService).validateCredentials(USERNAME, PASSWORD);
+        verify(trainingService).getTraineeTrainingsByCriteria(
+                request.getTraineeUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTrainerName(),
+                request.getTrainingType()
+        );
+    }
+
+    @Test
+    void getTrainerTrainingsByCriteria_ShouldCallServiceAndReturnResponse() {
+        TrainerTrainingCriteriaRequest request = new TrainerTrainingCriteriaRequest();
+        request.setTrainerUsername(TRAINER_USERNAME);
+        request.setFromDate(LocalDate.of(2024, 1, 1));
+        request.setToDate(LocalDate.of(2024, 12, 31));
+        request.setTraineeName("John");
+
+        TrainingResponse expected = buildTrainingResponse();
+
+        when(trainingService.getTrainerTrainingsByCriteria(
+                request.getTrainerUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTraineeName()
+        )).thenReturn(List.of(expected));
+
+        List<TrainingResponse> actual = facade.getTrainerTrainingsByCriteria(request, TRAINER_USERNAME, PASSWORD);
+
+        assertEquals(1, actual.size());
+        assertEquals(expected, actual.get(0));
+
+        verify(authenticationService).validateCredentials(TRAINER_USERNAME, PASSWORD);
+        verify(trainingService).getTrainerTrainingsByCriteria(
+                request.getTrainerUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTraineeName()
+        );
     }
 
     private TraineeResponse buildUpdatedTraineeResponse() {

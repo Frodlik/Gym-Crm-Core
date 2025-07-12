@@ -116,7 +116,7 @@ public class GymTestObjects {
         response.setTraineeUsername(USERNAME);
         response.setTrainerUsername(TRAINER_USERNAME);
         response.setTrainingName(TRAINING_NAME);
-        response.setTrainingType(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
+        response.setTrainingTypeName(FITNESS_TYPE);
         response.setTrainingDate(TRAINING_DATE);
         response.setTrainingDuration(TRAINING_DURATION);
 

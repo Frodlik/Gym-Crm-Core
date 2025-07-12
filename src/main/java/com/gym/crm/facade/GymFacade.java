@@ -3,9 +3,11 @@ package com.gym.crm.facade;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -106,5 +109,32 @@ public class GymFacade {
         logger.debug("Facade: Getting training by ID: {}", id);
 
         return trainingService.findById(id);
+    }
+
+    public List<TrainingResponse> getTraineeTrainingsByCriteria(TraineeTrainingCriteriaRequest request,
+                                                                String username, String password) {
+        authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting trainee trainings by criteria for username: {}", request.getTraineeUsername());
+
+        return trainingService.getTraineeTrainingsByCriteria(
+                request.getTraineeUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTrainerName(),
+                request.getTrainingType()
+        );
+    }
+
+    public List<TrainingResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request,
+                                                                String username, String password) {
+        authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting trainer trainings by criteria for username: {}", request.getTrainerUsername());
+
+        return trainingService.getTrainerTrainingsByCriteria(
+                request.getTrainerUsername(),
+                request.getFromDate(),
+                request.getToDate(),
+                request.getTraineeName()
+        );
     }
 }

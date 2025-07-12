@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -205,6 +207,105 @@ class TrainingServiceImplTest {
         service.create(createRequest);
 
         verify(trainingDAO).create(captor.capture());
+    }
+
+    @Test
+    void getTraineeTrainingsByCriteria_ShouldReturnMappedResponses() {
+        String traineeUsername = USERNAME;
+        LocalDate from = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 12, 31);
+        String trainerName = "Mike";
+        String trainingType = "Fitness";
+
+        TrainingResponse expected = GymTestObjects.buildTrainingResponse();
+
+        when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(trainingDAO.findTraineeTrainingsByCriteria(traineeUsername, from, to, trainerName, trainingType))
+                .thenReturn(List.of(training));
+        when(trainingMapper.toResponse(training)).thenReturn(expected);
+
+        List<TrainingResponse> actual = service.getTraineeTrainingsByCriteria(
+                traineeUsername, from, to, trainerName, trainingType
+        );
+
+        assertEquals(1, actual.size());
+        assertEquals(expected, actual.get(0));
+
+        verify(traineeDAO).findByUsername(traineeUsername);
+        verify(trainingDAO).findTraineeTrainingsByCriteria(traineeUsername, from, to, trainerName, trainingType);
+        verify(trainingMapper).toResponse(training);
+    }
+
+    @Test
+    void getTraineeTrainingsByCriteria_ShouldThrow_WhenTraineeNotFound() {
+        String traineeUsername = "nonexistent";
+
+        when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
+                service.getTraineeTrainingsByCriteria(traineeUsername, null, null, null, null));
+
+        assertEquals("Trainee not found with username: nonexistent", exception.getMessage());
+        verify(traineeDAO).findByUsername(traineeUsername);
+        verifyNoInteractions(trainingDAO);
+    }
+
+    @Test
+    void getTraineeTrainingsByCriteria_ShouldThrow_WhenUsernameIsBlank() {
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
+                service.getTraineeTrainingsByCriteria("  ", null, null, null, null));
+
+        assertEquals("Trainee username is required", exception.getMessage());
+        verifyNoInteractions(traineeDAO);
+    }
+
+    @Test
+    void getTrainerTrainingsByCriteria_ShouldReturnMappedResponses() {
+        String trainerUsername = TRAINER_USERNAME;
+        LocalDate from = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 12, 31);
+        String traineeName = "John";
+
+        TrainingResponse expected = GymTestObjects.buildTrainingResponse();
+
+        when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
+        when(trainingDAO.findTrainerTrainingsByCriteria(trainerUsername, from, to, traineeName))
+                .thenReturn(List.of(training));
+        when(trainingMapper.toResponse(training)).thenReturn(expected);
+
+        List<TrainingResponse> actual = service.getTrainerTrainingsByCriteria(
+                trainerUsername, from, to, traineeName
+        );
+
+        assertEquals(1, actual.size());
+        assertEquals(expected, actual.get(0));
+
+        verify(trainerDAO).findByUsername(trainerUsername);
+        verify(trainingDAO).findTrainerTrainingsByCriteria(trainerUsername, from, to, traineeName);
+        verify(trainingMapper).toResponse(training);
+    }
+
+    @Test
+    void getTrainerTrainingsByCriteria_ShouldThrow_WhenTrainerNotFound() {
+        String trainerUsername = "not.found";
+
+        when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
+                service.getTrainerTrainingsByCriteria(trainerUsername, null, null, null));
+
+        assertEquals("Trainer not found with username: not.found", exception.getMessage());
+        verify(trainerDAO).findByUsername(trainerUsername);
+        verifyNoInteractions(trainingDAO);
+    }
+
+    @Test
+    void getTrainerTrainingsByCriteria_ShouldThrow_WhenUsernameIsBlank() {
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
+                service.getTrainerTrainingsByCriteria("  ", null, null, null));
+
+        assertEquals("Trainer username is required", exception.getMessage());
+        verifyNoInteractions(trainerDAO);
     }
 
     private Training buildTraining() {

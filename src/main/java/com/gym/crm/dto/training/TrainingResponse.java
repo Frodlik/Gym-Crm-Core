@@ -1,6 +1,5 @@
 package com.gym.crm.dto.training;
 
-import com.gym.crm.model.TrainingType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,7 @@ public class TrainingResponse {
     private String traineeUsername;
     private String trainerUsername;
     private String trainingName;
-    private TrainingType trainingType;
+    private String trainingTypeName;
     private LocalDate trainingDate;
     private Integer trainingDuration;
 }
