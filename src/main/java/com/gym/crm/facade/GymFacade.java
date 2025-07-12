@@ -38,65 +38,73 @@ public class GymFacade {
 
     public TraineeResponse createTrainee(TraineeCreateRequest request) {
         logger.info("Facade: Creating trainee");
+
         return traineeService.create(request);
     }
 
     public Optional<TraineeResponse> getTraineeByUsername(String targetUsername, String username, String password) {
-        logger.debug("Facade: Getting trainee by username: {}", targetUsername);
         authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting trainee by username: {}", targetUsername);
+
         return traineeService.findByUsername(targetUsername);
     }
 
     public TraineeResponse updateTrainee(TraineeUpdateRequest request, String username, String password) {
-        logger.info("Facade: Updating trainee with ID: {}", request.getId());
         authenticationService.validateTraineeCredentials(username, password);
+        logger.info("Facade: Updating trainee with ID: {}", request.getId());
+
         return traineeService.update(request);
     }
 
     public void deleteTrainee(String targetUsername, String username, String password) {
-        logger.info("Facade: Deleting trainee with username: {}", targetUsername);
         authenticationService.validateTraineeCredentials(username, password);
+        logger.info("Facade: Deleting trainee with username: {}", targetUsername);
         traineeService.deleteByUsername(targetUsername);
     }
 
     public void changeTraineePassword(PasswordChangeRequest request) {
-        logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
         authenticationService.validateTraineeCredentials(request.getUsername(), request.getOldPassword());
+        logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
         traineeService.changePassword(request);
     }
 
     public TrainerResponse createTrainer(TrainerCreateRequest request) {
         logger.info("Facade: Creating trainer");
+
         return trainerService.create(request);
     }
 
     public Optional<TrainerResponse> getTrainerByUsername(String targetUsername, String username, String password) {
-        logger.debug("Facade: Getting trainer by username: {}", targetUsername);
         authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting trainer by username: {}", targetUsername);
+
         return trainerService.findByUsername(targetUsername);
     }
 
     public TrainerResponse updateTrainer(TrainerUpdateRequest request, String password) {
-        logger.info("Facade: Updating trainer with ID: {}", request.getId());
         authenticationService.validateTrainerCredentials(request.getUsername(), password);
+        logger.info("Facade: Updating trainer with ID: {}", request.getId());
+
         return trainerService.update(request);
     }
 
     public void changeTrainerPassword(PasswordChangeRequest request) {
-        logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
         authenticationService.validateTrainerCredentials(request.getUsername(), request.getOldPassword());
+        logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
         trainerService.changePassword(request);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training, String username, String password) {
-        logger.info("Facade: Creating training");
         authenticationService.validateCredentials(username, password);
+        logger.info("Facade: Creating training");
+
         return trainingService.create(training);
     }
 
     public Optional<TrainingResponse> getTrainingById(Long id, String username, String password) {
-        logger.debug("Facade: Getting training by ID: {}", id);
         authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting training by ID: {}", id);
+
         return trainingService.findById(id);
     }
 }
