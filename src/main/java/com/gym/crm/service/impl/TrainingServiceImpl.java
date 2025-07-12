@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -79,5 +81,54 @@ public class TrainingServiceImpl implements TrainingService {
 
         return trainingDAO.findById(id)
                 .map(trainingMapper::toResponse);
+    }
+
+    @Override
+    public List<TrainingResponse> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate,
+                                                                LocalDate toDate, String trainerName,
+                                                                String trainingType) {
+        logger.debug("Getting trainee trainings by criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType={}",
+                traineeUsername, fromDate, toDate, trainerName, trainingType);
+
+        if (traineeUsername == null || traineeUsername.trim().isEmpty()) {
+            throw new CoreServiceException("Trainee username is required");
+        }
+
+        if (traineeDAO.findByUsername(traineeUsername).isEmpty()) {
+            throw new CoreServiceException("Trainee not found with username: " + traineeUsername);
+        }
+
+        List<Training> trainings = trainingDAO.findTraineeTrainingsByCriteria(
+                traineeUsername, fromDate, toDate, trainerName, trainingType);
+
+        logger.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
+
+        return trainings.stream()
+                .map(trainingMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<TrainingResponse> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate,
+                                                                LocalDate toDate, String traineeName) {
+        logger.debug("Getting trainer trainings by criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",
+                trainerUsername, fromDate, toDate, traineeName);
+
+        if (trainerUsername == null || trainerUsername.trim().isEmpty()) {
+            throw new CoreServiceException("Trainer username is required");
+        }
+
+        if (trainerDAO.findByUsername(trainerUsername).isEmpty()) {
+            throw new CoreServiceException("Trainer not found with username: " + trainerUsername);
+        }
+
+        List<Training> trainings = trainingDAO.findTrainerTrainingsByCriteria(
+                trainerUsername, fromDate, toDate, traineeName);
+
+        logger.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
+
+        return trainings.stream()
+                .map(trainingMapper::toResponse)
+                .toList();
     }
 }
