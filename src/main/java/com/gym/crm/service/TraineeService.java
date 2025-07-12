@@ -3,6 +3,7 @@ package com.gym.crm.service;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 
 import java.util.Optional;
@@ -16,7 +17,11 @@ public interface TraineeService {
 
     TraineeResponse update(TraineeUpdateRequest request);
 
+    TraineeResponse updateTraineeTrainersList(TraineeTrainersUpdateRequest request);
+
     void deleteByUsername(String username);
 
     void changePassword(PasswordChangeRequest request);
+
+    TraineeResponse toggleTraineeActivation(String username);
 }

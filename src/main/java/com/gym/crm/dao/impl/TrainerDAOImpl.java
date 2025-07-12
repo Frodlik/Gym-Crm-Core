@@ -75,6 +75,23 @@ public class TrainerDAOImpl implements TrainerDAO {
     }
 
     @Override
+    public List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername) {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
+            String jpql = "SELECT tr FROM Trainer tr JOIN FETCH tr.specialization s WHERE tr.id NOT IN (" +
+                    "SELECT DISTINCT t.trainer.id FROM Training t JOIN t.trainee te WHERE te.user.username = :traineeUsername)";
+
+            List<Trainer> trainers = entityManager.createQuery(jpql, Trainer.class)
+                    .setParameter("traineeUsername", traineeUsername)
+                    .getResultList();
+
+            log.debug("Found {} trainers not assigned to trainee with username: {}",
+                    trainers.size(), traineeUsername);
+
+            return trainers;
+        });
+    }
+
+    @Override
     public Trainer update(Trainer trainer) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             Trainer existingTrainer = entityManager.find(Trainer.class, trainer.getId());
