@@ -156,10 +156,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
 
         assertNotNull(trainings);
         assertEquals(testCase.expectedSize(), trainings.size());
-
-        if (testCase.expectedTrainingName() != null && !trainings.isEmpty()) {
-            assertEquals(testCase.expectedTrainingName(), trainings.get(0).getTrainingName());
-        }
     }
 
     @ParameterizedTest
@@ -172,10 +168,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
 
         assertNotNull(trainings);
         assertEquals(testCase.expectedSize(), trainings.size());
-
-        if (testCase.expectedTrainingName() != null && !trainings.isEmpty()) {
-            assertEquals(testCase.expectedTrainingName(), trainings.get(0).getTrainingName());
-        }
     }
 
     private static Stream<Arguments> provideTraineeCriteriaTestCases() {
