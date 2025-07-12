@@ -17,6 +17,7 @@ public class GymTestObjects {
     public static final String FIRST_NAME = "John";
     public static final String LAST_NAME = "Doe";
     public static final String USERNAME = "john.doe";
+    public static final String PASSWORD = "LuNdYs6oTA";
     public static final String TRAINER_FIRST_NAME = "Mike";
     public static final String TRAINER_LAST_NAME = "Johnson";
     public static final String TRAINER_USERNAME = "mike.johnson";

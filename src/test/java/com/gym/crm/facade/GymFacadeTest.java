@@ -10,6 +10,7 @@ import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.model.TrainingType;
+import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import static com.gym.crm.facade.GymTestObjects.FIRST_NAME;
 import static com.gym.crm.facade.GymTestObjects.FITNESS_TYPE;
 import static com.gym.crm.facade.GymTestObjects.LAST_NAME;
+import static com.gym.crm.facade.GymTestObjects.PASSWORD;
 import static com.gym.crm.facade.GymTestObjects.TRAINEE_ID;
 import static com.gym.crm.facade.GymTestObjects.TRAINER_FIRST_NAME;
 import static com.gym.crm.facade.GymTestObjects.TRAINER_ID;
@@ -60,6 +62,8 @@ class GymFacadeTest {
     private TrainerService trainerService;
     @Mock
     private TrainingService trainingService;
+    @Mock
+    private AuthenticationService authenticationService;
     @InjectMocks
     private GymFacade facade;
 
@@ -81,53 +85,29 @@ class GymFacadeTest {
     }
 
     @Test
-    void getTraineeById_ShouldCallServiceAndReturnResponse() {
-        TraineeResponse expectedResponse = buildTraineeResponse();
-
-        when(traineeService.findById(TRAINEE_ID)).thenReturn(Optional.of(expectedResponse));
-
-        Optional<TraineeResponse> actual = facade.getTraineeById(TRAINEE_ID);
-
-        assertTrue(actual.isPresent());
-        assertEquals(TRAINEE_ID, actual.get().getId());
-        assertEquals(USERNAME, actual.get().getUsername());
-        verify(traineeService).findById(TRAINEE_ID);
-    }
-
-    @Test
-    void getTraineeById_ShouldReturnEmptyWhenNotFound() {
-        Long nonExistentId = 999L;
-
-        when(traineeService.findById(nonExistentId)).thenReturn(Optional.empty());
-
-        Optional<TraineeResponse> actual = facade.getTraineeById(nonExistentId);
-
-        assertFalse(actual.isPresent());
-        verify(traineeService).findById(nonExistentId);
-    }
-
-    @Test
     void getTraineeByUsername_ShouldCallServiceAndReturnResponse() {
         TraineeResponse expectedResponse = buildTraineeResponse();
 
         when(traineeService.findByUsername(USERNAME)).thenReturn(Optional.of(expectedResponse));
 
-        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME);
+        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME, USERNAME, PASSWORD);
 
         assertTrue(actual.isPresent());
         assertEquals(TRAINEE_ID, actual.get().getId());
         assertEquals(USERNAME, actual.get().getUsername());
         verify(traineeService).findByUsername(USERNAME);
+        verify(authenticationService).validateCredentials(USERNAME, PASSWORD);
     }
 
     @Test
     void getTraineeByUsername_ShouldReturnEmptyWhenNotFound() {
         when(traineeService.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME);
+        Optional<TraineeResponse> actual = facade.getTraineeByUsername(USERNAME, USERNAME, PASSWORD);
 
         assertFalse(actual.isPresent());
         verify(traineeService).findByUsername(USERNAME);
+        verify(authenticationService).validateCredentials(USERNAME, PASSWORD);
     }
 
     @Test
@@ -137,20 +117,21 @@ class GymFacadeTest {
 
         when(traineeService.update(expected)).thenReturn(updatedResponse);
 
-        TraineeResponse actual = facade.updateTrainee(expected);
+        TraineeResponse actual = facade.updateTrainee(expected, USERNAME, PASSWORD);
 
         assertNotNull(actual);
         assertEquals(TRAINEE_ID, actual.getId());
         assertEquals(expected.getFirstName(), actual.getFirstName());
         assertEquals(expected.getLastName(), actual.getLastName());
         verify(traineeService).update(expected);
+        verify(authenticationService).validateTraineeCredentials(USERNAME, PASSWORD);
     }
 
     @Test
     void deleteTrainee_ShouldCallService() {
-        facade.deleteTrainee(TRAINER_USERNAME);
+        facade.deleteTrainee(USERNAME, USERNAME, PASSWORD);
 
-        verify(traineeService).deleteByUsername(TRAINER_USERNAME);
+        verify(authenticationService).validateTraineeCredentials(USERNAME, PASSWORD);
     }
 
     @Test
@@ -181,54 +162,30 @@ class GymFacadeTest {
     }
 
     @Test
-    void getTrainerById_ShouldCallServiceAndReturnResponse() {
-        TrainerResponse expectedResponse = buildTrainerResponse();
-
-        when(trainerService.findById(TRAINER_ID)).thenReturn(Optional.of(expectedResponse));
-
-        Optional<TrainerResponse> actual = facade.getTrainerById(TRAINER_ID);
-
-        assertTrue(actual.isPresent());
-        assertEquals(TRAINER_ID, actual.get().getId());
-        assertEquals(TRAINER_USERNAME, actual.get().getUsername());
-        assertEquals(FITNESS_TYPE, actual.get().getSpecialization().getTrainingTypeName());
-        verify(trainerService).findById(TRAINER_ID);
-    }
-
-    @Test
-    void getTrainerById_ShouldReturnEmptyWhenNotFound() {
-        Long nonExistentId = 999L;
-
-        when(trainerService.findById(nonExistentId)).thenReturn(Optional.empty());
-
-        Optional<TrainerResponse> actual = facade.getTrainerById(nonExistentId);
-
-        assertFalse(actual.isPresent());
-        verify(trainerService).findById(nonExistentId);
-    }
-
-    @Test
     void getTrainerByUsername_ShouldCallServiceAndReturnResponse() {
         TrainerResponse expectedResponse = buildTrainerResponse();
 
         when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(expectedResponse));
 
-        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
+        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME, TRAINER_USERNAME, PASSWORD);
 
         assertTrue(actual.isPresent());
         assertEquals(TRAINER_ID, actual.get().getId());
         assertEquals(TRAINER_USERNAME, actual.get().getUsername());
         verify(trainerService).findByUsername(TRAINER_USERNAME);
+        verify(authenticationService).validateCredentials(TRAINER_USERNAME, PASSWORD);
     }
 
     @Test
     void getTrainerByUsername_ShouldReturnEmptyWhenNotFound() {
         when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
-        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
+        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME, TRAINER_USERNAME, PASSWORD);
 
         assertFalse(actual.isPresent());
         verify(trainerService).findByUsername(TRAINER_USERNAME);
+        verify(authenticationService).validateCredentials(TRAINER_USERNAME, PASSWORD);
+
     }
 
     @Test
@@ -238,7 +195,7 @@ class GymFacadeTest {
 
         when(trainerService.update(expected)).thenReturn(updatedResponse);
 
-        TrainerResponse actual = facade.updateTrainer(expected);
+        TrainerResponse actual = facade.updateTrainer(expected, PASSWORD);
 
         assertNotNull(actual);
         assertEquals(TRAINER_ID, actual.getId());
@@ -246,6 +203,7 @@ class GymFacadeTest {
         assertEquals(expected.getLastName(), actual.getLastName());
         assertEquals(YOGA_TYPE, actual.getSpecialization().getTrainingTypeName());
         verify(trainerService).update(expected);
+        verify(authenticationService).validateTrainerCredentials(expected.getUsername(), PASSWORD);
     }
 
     @Test
@@ -264,7 +222,7 @@ class GymFacadeTest {
 
         when(trainingService.create(request)).thenReturn(expectedResponse);
 
-        TrainingResponse actual = facade.createTraining(request);
+        TrainingResponse actual = facade.createTraining(request, USERNAME, PASSWORD);
 
         assertNotNull(actual);
         assertEquals(TRAINING_ID, actual.getId());
@@ -274,6 +232,7 @@ class GymFacadeTest {
         assertEquals(TRAINING_DATE, actual.getTrainingDate());
         assertEquals(TRAINING_DURATION, actual.getTrainingDuration());
         verify(trainingService).create(request);
+        verify(authenticationService).validateCredentials(USERNAME, PASSWORD);
     }
 
     @Test
@@ -282,7 +241,7 @@ class GymFacadeTest {
 
         when(trainingService.findById(TRAINING_ID)).thenReturn(Optional.of(expectedResponse));
 
-        Optional<TrainingResponse> actual = facade.getTrainingById(TRAINING_ID);
+        Optional<TrainingResponse> actual = facade.getTrainingById(TRAINING_ID, USERNAME, PASSWORD);
 
         assertTrue(actual.isPresent());
         assertEquals(TRAINING_ID, actual.get().getId());
@@ -290,6 +249,7 @@ class GymFacadeTest {
         assertEquals(TRAINER_USERNAME, actual.get().getTrainerUsername());
         assertEquals(TRAINING_NAME, actual.get().getTrainingName());
         verify(trainingService).findById(TRAINING_ID);
+        verify(authenticationService).validateCredentials(USERNAME, PASSWORD);
     }
 
     @Test
@@ -298,7 +258,7 @@ class GymFacadeTest {
 
         when(trainingService.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        Optional<TrainingResponse> actual = facade.getTrainingById(nonExistentId);
+        Optional<TrainingResponse> actual = facade.getTrainingById(nonExistentId, USERNAME, PASSWORD);
 
         assertFalse(actual.isPresent());
         verify(trainingService).findById(nonExistentId);
@@ -309,17 +269,18 @@ class GymFacadeTest {
         TraineeService mockTraineeService = mock(TraineeService.class);
         TrainerService mockTrainerService = mock(TrainerService.class);
         TrainingService mockTrainingService = mock(TrainingService.class);
+        AuthenticationService mockAuthenticationService = mock(AuthenticationService.class);
 
-        when(mockTraineeService.findById(TRAINEE_ID)).thenReturn(Optional.of(buildTraineeResponse()));
+        when(mockTraineeService.findByUsername(USERNAME)).thenReturn(Optional.of(buildTraineeResponse()));
 
-        GymFacade gymFacade = new GymFacade(mockTraineeService, mockTrainerService, mockTrainingService);
+        GymFacade gymFacade = new GymFacade(mockTraineeService, mockTrainerService, mockTrainingService, mockAuthenticationService);
 
         assertNotNull(gymFacade);
 
-        Optional<TraineeResponse> actual = gymFacade.getTraineeById(TRAINEE_ID);
+        Optional<TraineeResponse> actual = gymFacade.getTraineeByUsername(USERNAME, USERNAME, PASSWORD);
 
         assertTrue(actual.isPresent());
-        verify(mockTraineeService).findById(TRAINEE_ID);
+        verify(mockAuthenticationService).validateCredentials(USERNAME, PASSWORD);
     }
 
     private TraineeResponse buildUpdatedTraineeResponse() {
