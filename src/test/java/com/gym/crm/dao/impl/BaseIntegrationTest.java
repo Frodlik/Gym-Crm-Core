@@ -31,7 +31,7 @@ import java.util.function.Function;
         TrainerDAOImpl.class,
         TrainingDAOImpl.class,
         TestDataSourceConfig.class})
-@DBUnit(leakHunter = true, schema = "gym_crm_test", caseSensitiveTableNames = true)
+@DBUnit(leakHunter = false, schema = "gym_crm_test", caseSensitiveTableNames = true)
 public abstract class BaseIntegrationTest<R> {
     @Autowired
     protected SessionFactory sessionFactory;

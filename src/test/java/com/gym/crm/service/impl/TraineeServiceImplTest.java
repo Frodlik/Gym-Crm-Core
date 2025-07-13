@@ -1,14 +1,17 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,8 @@ class TraineeServiceImplTest {
 
     @Mock
     private TraineeDAO traineeDAO;
+    @Mock
+    private TrainerDAO trainerDAO;
     @Mock
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
@@ -243,6 +248,126 @@ class TraineeServiceImplTest {
         verify(traineeDAO, never()).deleteByUsername(USERNAME);
     }
 
+    @Test
+    void toggleTraineeActivation_ShouldToggleFromActiveToInactive() {
+        Trainee activeTrainee = buildTrainee();
+        User inactiveUser = activeTrainee.getUser().toBuilder()
+                .isActive(false)
+                .build();
+        Trainee inactiveTrainee = activeTrainee.toBuilder()
+                .user(inactiveUser)
+                .build();
+        TraineeResponse expected = buildTraineeResponse();
+        expected.setActive(false);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(activeTrainee));
+        when(traineeDAO.update(any(Trainee.class))).thenReturn(inactiveTrainee);
+        when(traineeMapper.toResponse(inactiveTrainee)).thenReturn(expected);
+
+        TraineeResponse actual = service.toggleTraineeActivation(USERNAME);
+
+        assertNotNull(actual);
+        assertFalse(actual.isActive());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).update(any(Trainee.class));
+        verify(traineeMapper).toResponse(inactiveTrainee);
+
+        verify(traineeDAO).update(captor.capture());
+        Trainee captured = captor.getValue();
+        assertFalse(captured.getUser().getIsActive());
+    }
+
+    @Test
+    void toggleTraineeActivation_ShouldToggleFromInactiveToActive() {
+        User inactiveUser = buildTrainee().getUser().toBuilder()
+                .isActive(false)
+                .build();
+        Trainee inactiveTrainee = buildTrainee().toBuilder()
+                .user(inactiveUser)
+                .build();
+
+        User activeUser = inactiveUser.toBuilder()
+                .isActive(true)
+                .build();
+        Trainee activeTrainee = inactiveTrainee.toBuilder()
+                .user(activeUser)
+                .build();
+
+        TraineeResponse expected = buildTraineeResponse();
+        expected.setActive(true);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
+        when(traineeDAO.update(any(Trainee.class))).thenReturn(activeTrainee);
+        when(traineeMapper.toResponse(activeTrainee)).thenReturn(expected);
+
+        TraineeResponse actual = service.toggleTraineeActivation(USERNAME);
+
+        assertNotNull(actual);
+        assertTrue(actual.isActive());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO).update(any(Trainee.class));
+        verify(traineeMapper).toResponse(activeTrainee);
+
+        verify(traineeDAO).update(captor.capture());
+        Trainee captured = captor.getValue();
+        assertTrue(captured.getUser().getIsActive());
+    }
+
+    @Test
+    void updateTraineeTrainersList_ShouldUpdateSuccessfully() {
+        TraineeTrainersUpdateRequest request = new TraineeTrainersUpdateRequest();
+        request.setTraineeUsername(USERNAME);
+        request.setTrainerUsernames(List.of("trainer1", "trainer2"));
+
+        Trainee trainee = buildTrainee();
+        Trainer trainer1 = createTrainerWithUsername("trainer1");
+        Trainer trainer2 = createTrainerWithUsername("trainer2");
+        Trainee updatedTrainee = buildTrainee();
+        TraineeResponse expected = buildTraineeResponse();
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(trainerDAO.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
+        when(trainerDAO.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
+        when(traineeDAO.updateTraineeTrainersList(USERNAME, List.of("trainer1", "trainer2")))
+                .thenReturn(updatedTrainee);
+        when(traineeMapper.toResponse(updatedTrainee)).thenReturn(expected);
+
+        TraineeResponse actual = service.updateTraineeTrainersList(request);
+
+        assertNotNull(actual);
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getUsername(), actual.getUsername());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(trainerDAO).findByUsername("trainer1");
+        verify(trainerDAO).findByUsername("trainer2");
+        verify(traineeDAO).updateTraineeTrainersList(USERNAME, List.of("trainer1", "trainer2"));
+        verify(traineeMapper).toResponse(updatedTrainee);
+    }
+
+    @Test
+    void updateTraineeTrainersList_ShouldThrowExceptionWhenTraineeNotFound() {
+        TraineeTrainersUpdateRequest request = new TraineeTrainersUpdateRequest();
+        request.setTraineeUsername(USERNAME);
+        request.setTrainerUsernames(List.of("trainer1"));
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.updateTraineeTrainersList(request));
+
+        assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(trainerDAO, never()).findByUsername(any());
+        verify(traineeDAO, never()).updateTraineeTrainersList(any(), any());
+        verify(traineeMapper, never()).toResponse(any());
+    }
+
     private Trainee buildTrainee() {
         User user = User.builder()
                 .id(999L)
@@ -291,6 +416,16 @@ class TraineeServiceImplTest {
                 .build();
 
         return Trainee.builder()
+                .user(user)
+                .build();
+    }
+
+    private Trainer createTrainerWithUsername(String username) {
+        User user = User.builder()
+                .username(username)
+                .build();
+
+        return Trainer.builder()
                 .user(user)
                 .build();
     }

@@ -1,6 +1,7 @@
 package com.gym.crm.dao.impl;
 
 import com.github.database.rider.core.api.dataset.DataSet;
+import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
@@ -166,6 +167,55 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .build();
 
         assertThrows(RuntimeException.class, () -> dao.update(nonExistentTrainee));
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldUpdateTrainersListSuccessfully() {
+        String traineeUsername = "tom.brown";
+        List<String> trainerUsernames = List.of("sarah.johnson", "mike.wilson");
+
+        Trainee actual = dao.updateTraineeTrainersList(traineeUsername, trainerUsernames);
+
+        assertNotNull(actual);
+        assertEquals(traineeUsername, actual.getUser().getUsername());
+        assertEquals(trainerUsernames.size(), actual.getTrainers().size());
+
+        List<String> actualTrainerUsernames = actual.getTrainers().stream()
+                .map(trainer -> trainer.getUser().getUsername())
+                .sorted()
+                .toList();
+
+        List<String> expectedUsernames = List.of("mike.wilson", "sarah.johnson");
+        assertEquals(expectedUsernames, actualTrainerUsernames);
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldClearPreviousTrainers() {
+        String traineeUsername = "tom.brown";
+        List<String> firstTrainersList = List.of("sarah.johnson");
+        List<String> secondTrainersList = List.of("mike.wilson");
+
+        dao.updateTraineeTrainersList(traineeUsername, firstTrainersList);
+
+        Trainee actual = dao.updateTraineeTrainersList(traineeUsername, secondTrainersList);
+
+        assertNotNull(actual);
+        assertEquals(1, actual.getTrainers().size());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldThrowExceptionWhenTraineeNotExists() {
+        String nonExistentTraineeUsername = "non.existent";
+        List<String> trainerUsernames = List.of("sarah.johnson");
+
+        TransactionHandlerException actualException = assertThrows(TransactionHandlerException.class,
+                () -> dao.updateTraineeTrainersList(nonExistentTraineeUsername, trainerUsernames)
+        );
+
+        assertEquals("Error performing Hibernate operation. Transaction is rolled back", actualException.getMessage());
     }
 
     @Test
