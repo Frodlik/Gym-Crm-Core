@@ -160,6 +160,31 @@ class TrainerDAOImplTest extends BaseIntegrationTest<TrainerDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindTrainersNotAssignedToTrainee_ShouldReturnUnassignedTrainers() {
+        String traineeUsername = "tom.brown";
+
+        List<Trainer> actual = dao.findTrainersNotAssignedToTrainee(traineeUsername);
+
+        assertNotNull(actual);
+        assertEquals(1, actual.size());
+        assertEquals("mike.wilson", actual.get(0).getUser().getUsername());
+        assertEquals("Mike", actual.get(0).getUser().getFirstName());
+        assertNotNull(actual.get(0).getSpecialization());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindTrainersNotAssignedToTrainee_ShouldReturnAllTrainersWhenTraineeHasNoTrainings() {
+        String nonExistentTraineeUsername = "non.existent";
+
+        List<Trainer> actual = dao.findTrainersNotAssignedToTrainee(nonExistentTraineeUsername);
+
+        assertNotNull(actual);
+        assertEquals(3, actual.size());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testUpdate_ShouldUpdateExistingTrainerWithNewSpecializationAndUserData() {
         Long trainerIdToUpdate = 2L;
         Trainer existingTrainer = dao.findById(trainerIdToUpdate).orElseThrow();

@@ -1,9 +1,11 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TraineeMapper;
@@ -25,6 +27,7 @@ public class TraineeServiceImpl implements TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeServiceImpl.class);
 
     private TraineeDAO traineeDAO;
+    private TrainerDAO trainerDAO;
     private UserCredentialsGenerator userCredentialsGenerator;
     private TraineeMapper traineeMapper;
 
@@ -41,6 +44,11 @@ public class TraineeServiceImpl implements TraineeService {
     @Autowired
     public void setTraineeMapper(TraineeMapper traineeMapper) {
         this.traineeMapper = traineeMapper;
+    }
+
+    @Autowired
+    public void setTrainerDAO(TrainerDAO trainerDAO) {
+        this.trainerDAO = trainerDAO;
     }
 
     @Override
@@ -122,6 +130,30 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    public TraineeResponse updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequest request) {
+        logger.debug("Updating trainers list for trainee with username: {}", request.getTraineeUsername());
+
+        traineeDAO.findByUsername(request.getTraineeUsername())
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + request.getTraineeUsername()));
+
+        request.getTrainerUsernames().stream()
+                .filter(trainerUsername -> trainerDAO.findByUsername(trainerUsername).isEmpty())
+                .findFirst()
+                .ifPresent(notFound -> {
+                    throw new CoreServiceException("Trainer not found with username: " + notFound);
+                });
+
+        Trainee updatedTrainee = traineeDAO.updateTraineeTrainersList(
+                request.getTraineeUsername(),
+                request.getTrainerUsernames()
+        );
+
+        logger.info("Successfully updated trainers list for trainee with username: {}", request.getTraineeUsername());
+
+        return traineeMapper.toResponse(updatedTrainee);
+    }
+
+    @Override
     public void deleteByUsername(String username) {
         logger.debug("Deleting trainee by username: {}", username);
 
@@ -154,5 +186,29 @@ public class TraineeServiceImpl implements TraineeService {
         traineeDAO.update(updatedTrainee);
 
         logger.info("Password changed successfully for trainee: {}", request.getUsername());
+    }
+
+    @Override
+    public TraineeResponse toggleTraineeActivation(String username) {
+        logger.debug("Toggling activation for trainee with username: {}", username);
+
+        Trainee trainee = traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + username));
+
+        boolean isActive = !trainee.getUser().getIsActive();
+
+        User updatedUser = trainee.getUser().toBuilder()
+                .isActive(isActive)
+                .build();
+        Trainee updatedTrainee = trainee.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        Trainee savedTrainee = traineeDAO.update(updatedTrainee);
+
+        logger.info("Successfully toggled activation for trainee with username: {} to {}",
+                username, isActive ? "active" : "inactive");
+
+        return traineeMapper.toResponse(savedTrainee);
     }
 }

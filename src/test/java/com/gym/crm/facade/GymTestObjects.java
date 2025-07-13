@@ -3,6 +3,7 @@ package com.gym.crm.facade;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
@@ -12,6 +13,7 @@ import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.model.TrainingType;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class GymTestObjects {
     public static final String FIRST_NAME = "John";
@@ -128,6 +130,14 @@ public class GymTestObjects {
         request.setUsername(USERNAME);
         request.setOldPassword("oldPassword");
         request.setNewPassword("newPassword");
+
+        return request;
+    }
+
+    public static TraineeTrainersUpdateRequest buildTraineeTrainersUpdateRequest() {
+        TraineeTrainersUpdateRequest request = new TraineeTrainersUpdateRequest();
+        request.setTraineeUsername(USERNAME);
+        request.setTrainerUsernames(List.of(TRAINER_USERNAME, "trainer2.username"));
 
         return request;
     }

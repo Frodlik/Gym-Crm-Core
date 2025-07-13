@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
@@ -25,6 +26,7 @@ public class TrainerServiceImpl implements TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerServiceImpl.class);
 
     private TrainerDAO trainerDAO;
+    private TraineeDAO traineeDAO;
     private UserCredentialsGenerator userCredentialsGenerator;
     private TrainerMapper trainerMapper;
 
@@ -41,6 +43,11 @@ public class TrainerServiceImpl implements TrainerService {
     @Autowired
     public void setTrainerMapper(TrainerMapper trainerMapper) {
         this.trainerMapper = trainerMapper;
+    }
+
+    @Autowired
+    public void setTraineeDAO(TraineeDAO traineeDAO) {
+        this.traineeDAO = traineeDAO;
     }
 
     @Override
@@ -93,6 +100,22 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    public List<TrainerResponse> findTrainersNotAssignedToTrainee(String traineeUsername) {
+        logger.debug("Finding trainers not assigned to trainee with username: {}", traineeUsername);
+
+        traineeDAO.findByUsername(traineeUsername)
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + traineeUsername));
+
+        List<Trainer> trainers = trainerDAO.findTrainersNotAssignedToTrainee(traineeUsername);
+
+        logger.info("Found {} trainers not assigned to trainee: {}", trainers.size(), traineeUsername);
+
+        return trainers.stream()
+                .map(trainerMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     public TrainerResponse update(@Valid TrainerUpdateRequest request) {
         logger.debug("Updating trainer with ID: {}", request.getId());
 
@@ -142,5 +165,29 @@ public class TrainerServiceImpl implements TrainerService {
         trainerDAO.update(updatedTrainer);
 
         logger.info("Password changed successfully for trainer: {}", request.getUsername());
+    }
+
+    @Override
+    public TrainerResponse toggleTrainerActivation(String username) {
+        logger.debug("Toggling activation for trainer with username: {}", username);
+
+        Trainer trainer = trainerDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + username));
+
+        boolean isActive = !trainer.getUser().getIsActive();
+
+        User updatedUser = trainer.getUser().toBuilder()
+                .isActive(isActive)
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        Trainer savedTrainer = trainerDAO.update(updatedTrainer);
+
+        logger.info("Successfully toggled activation for trainer with username: {} to {}",
+                username, isActive ? "active" : "inactive");
+
+        return trainerMapper.toResponse(savedTrainer);
     }
 }

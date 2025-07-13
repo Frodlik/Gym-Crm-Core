@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
@@ -8,6 +9,7 @@ import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TrainerMapper;
+import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
@@ -48,6 +50,8 @@ class TrainerServiceImplTest {
 
     @Mock
     private TrainerDAO trainerDAO;
+    @Mock
+    private TraineeDAO traineeDAO;
     @Mock
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
@@ -242,6 +246,109 @@ class TrainerServiceImplTest {
         verify(trainerDAO).update(any(Trainer.class));
     }
 
+    @Test
+    void toggleTrainerActivation_ShouldToggleFromActiveToInactive() {
+        Trainer activeTrainer = buildTrainer();
+        User inactiveUser = activeTrainer.getUser().toBuilder()
+                .isActive(false)
+                .build();
+        Trainer inactiveTrainer = activeTrainer.toBuilder()
+                .user(inactiveUser)
+                .build();
+        TrainerResponse expected = buildTrainerResponse();
+        expected.setActive(false);
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
+        when(trainerDAO.update(any(Trainer.class))).thenReturn(inactiveTrainer);
+        when(trainerMapper.toResponse(inactiveTrainer)).thenReturn(expected);
+
+        TrainerResponse actual = service.toggleTrainerActivation(TRAINER_USERNAME);
+
+        assertNotNull(actual);
+        assertFalse(actual.isActive());
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO).update(any(Trainer.class));
+        verify(trainerMapper).toResponse(inactiveTrainer);
+
+        verify(trainerDAO).update(captor.capture());
+        Trainer captured = captor.getValue();
+        assertFalse(captured.getUser().getIsActive());
+    }
+
+    @Test
+    void toggleTrainerActivation_ShouldToggleFromInactiveToActive() {
+        User inactiveUser = buildTrainer().getUser().toBuilder()
+                .isActive(false)
+                .build();
+        Trainer inactiveTrainer = buildTrainer().toBuilder()
+                .user(inactiveUser)
+                .build();
+        User activeUser = inactiveUser.toBuilder()
+                .isActive(true)
+                .build();
+        Trainer activeTrainer = inactiveTrainer.toBuilder()
+                .user(activeUser)
+                .build();
+
+        TrainerResponse expected = buildTrainerResponse();
+        expected.setActive(true);
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
+        when(trainerDAO.update(any(Trainer.class))).thenReturn(activeTrainer);
+        when(trainerMapper.toResponse(activeTrainer)).thenReturn(expected);
+
+        TrainerResponse actual = service.toggleTrainerActivation(TRAINER_USERNAME);
+
+        assertNotNull(actual);
+        assertTrue(actual.isActive());
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO).update(any(Trainer.class));
+        verify(trainerMapper).toResponse(activeTrainer);
+
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDAO).update(captor.capture());
+        Trainer captured = captor.getValue();
+        assertTrue(captured.getUser().getIsActive());
+    }
+
+    @Test
+    void findTrainersNotAssignedToTrainee_ShouldReturnListOfTrainers() {
+        String traineeUsername = "trainee.user";
+        Trainee trainee = buildTraineeWithUsername(traineeUsername);
+
+        List<Trainer> unassignedTrainers = List.of(
+                createTrainerWithUsername("trainer1"),
+                createTrainerWithUsername("trainer2"),
+                createTrainerWithUsername("trainer3")
+        );
+        List<TrainerResponse> expectedResponses = List.of(
+                createTrainerResponse("trainer1", 1L),
+                createTrainerResponse("trainer2", 2L),
+                createTrainerResponse("trainer3", 3L)
+        );
+
+        when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(trainerDAO.findTrainersNotAssignedToTrainee(traineeUsername)).thenReturn(unassignedTrainers);
+        when(trainerMapper.toResponse(unassignedTrainers.get(0))).thenReturn(expectedResponses.get(0));
+        when(trainerMapper.toResponse(unassignedTrainers.get(1))).thenReturn(expectedResponses.get(1));
+        when(trainerMapper.toResponse(unassignedTrainers.get(2))).thenReturn(expectedResponses.get(2));
+
+        List<TrainerResponse> actual = service.findTrainersNotAssignedToTrainee(traineeUsername);
+
+        assertNotNull(actual);
+        assertEquals(3, actual.size());
+        assertEquals("trainer1", actual.get(0).getUsername());
+        assertEquals("trainer2", actual.get(1).getUsername());
+        assertEquals("trainer3", actual.get(2).getUsername());
+
+        verify(traineeDAO).findByUsername(traineeUsername);
+        verify(trainerDAO).findTrainersNotAssignedToTrainee(traineeUsername);
+        verify(trainerMapper).toResponse(unassignedTrainers.get(0));
+        verify(trainerMapper).toResponse(unassignedTrainers.get(1));
+        verify(trainerMapper).toResponse(unassignedTrainers.get(2));
+    }
+
     private Trainer buildTrainer() {
         User user = User.builder()
                 .id(999L)
@@ -291,5 +398,29 @@ class TrainerServiceImplTest {
         return Trainer.builder()
                 .user(user)
                 .build();
+    }
+
+    private Trainee buildTraineeWithUsername(String username) {
+        User user = User.builder()
+                .username(username)
+                .firstName("John")
+                .lastName("Doe")
+                .build();
+
+        return Trainee.builder()
+                .user(user)
+                .build();
+    }
+
+    private TrainerResponse createTrainerResponse(String username, Long id) {
+        TrainerResponse response = new TrainerResponse();
+        response.setId(id);
+        response.setUsername(username);
+        response.setFirstName("Trainer");
+        response.setLastName("Name");
+        response.setActive(true);
+        response.setSpecialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
+
+        return response;
     }
 }

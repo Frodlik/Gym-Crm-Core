@@ -5,6 +5,7 @@ import com.gym.crm.dto.trainer.TrainerCreateRequest;
 import com.gym.crm.dto.trainer.TrainerResponse;
 import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TrainerService {
@@ -14,7 +15,11 @@ public interface TrainerService {
 
     Optional<TrainerResponse> findByUsername(String username);
 
+    List<TrainerResponse> findTrainersNotAssignedToTrainee(String traineeUsername);
+
     TrainerResponse update(TrainerUpdateRequest request);
 
     void changePassword(PasswordChangeRequest request);
+
+    TrainerResponse toggleTrainerActivation(String username);
 }

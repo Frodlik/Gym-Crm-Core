@@ -3,6 +3,7 @@ package com.gym.crm.facade;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequest;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.dto.trainer.TrainerCreateRequest;
@@ -59,6 +60,13 @@ public class GymFacade {
         return traineeService.update(request);
     }
 
+    public TraineeResponse updateTraineeTrainersList(TraineeTrainersUpdateRequest request, String username, String password) {
+        authenticationService.validateTraineeCredentials(username, password);
+        logger.info("Facade: Updating trainers list for trainee with username: {}", request.getTraineeUsername());
+
+        return traineeService.updateTraineeTrainersList(request);
+    }
+
     public void deleteTrainee(String targetUsername, String username, String password) {
         authenticationService.validateTraineeCredentials(username, password);
         logger.info("Facade: Deleting trainee with username: {}", targetUsername);
@@ -69,6 +77,13 @@ public class GymFacade {
         authenticationService.validateTraineeCredentials(request.getUsername(), request.getOldPassword());
         logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
         traineeService.changePassword(request);
+    }
+
+    public TraineeResponse toggleTraineeActivation(String targetUsername, String username, String password) {
+        authenticationService.validateCredentials(username, password);
+        logger.info("Facade: Toggling activation for trainee with username: {}", targetUsername);
+
+        return traineeService.toggleTraineeActivation(targetUsername);
     }
 
     public TrainerResponse createTrainer(TrainerCreateRequest request) {
@@ -84,6 +99,13 @@ public class GymFacade {
         return trainerService.findByUsername(targetUsername);
     }
 
+    public List<TrainerResponse> getTrainersNotAssignedToTrainee(String traineeUsername, String username, String password) {
+        authenticationService.validateCredentials(username, password);
+        logger.debug("Facade: Getting trainers not assigned to trainee with username: {}", traineeUsername);
+
+        return trainerService.findTrainersNotAssignedToTrainee(traineeUsername);
+    }
+
     public TrainerResponse updateTrainer(TrainerUpdateRequest request, String password) {
         authenticationService.validateTrainerCredentials(request.getUsername(), password);
         logger.info("Facade: Updating trainer with ID: {}", request.getId());
@@ -95,6 +117,13 @@ public class GymFacade {
         authenticationService.validateTrainerCredentials(request.getUsername(), request.getOldPassword());
         logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
         trainerService.changePassword(request);
+    }
+
+    public TrainerResponse toggleTrainerActivation(String targetUsername, String username, String password) {
+        authenticationService.validateCredentials(username, password);
+        logger.info("Facade: Toggling activation for trainer with username: {}", targetUsername);
+
+        return trainerService.toggleTrainerActivation(targetUsername);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training, String username, String password) {

@@ -1,7 +1,10 @@
 package com.gym.crm.dao.impl;
 
 import com.github.database.rider.core.api.dataset.DataSet;
+import com.gym.crm.exception.TransactionHandlerException;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
+import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -168,6 +171,48 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
         assertThrows(RuntimeException.class, () -> dao.update(nonExistentTrainee));
     }
 
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldUpdateTrainersListSuccessfully() {
+        String traineeUsername = "tom.brown";
+        List<String> trainerUsernames = List.of("sarah.johnson", "mike.wilson");
+        List<Trainer> expected = buildExpectedTrainers();
+
+        Trainee actual = dao.updateTraineeTrainersList(traineeUsername, trainerUsernames);
+
+        assertNotNull(actual);
+        assertEquals(traineeUsername, actual.getUser().getUsername());
+        assertEquals(2, actual.getTrainers().size());
+        assertTrue(actual.getTrainers().containsAll(expected));
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldClearPreviousTrainers() {
+        String traineeUsername = "tom.brown";
+        List<String> firstTrainersList = List.of("sarah.johnson");
+        List<String> secondTrainersList = List.of("mike.wilson");
+
+        dao.updateTraineeTrainersList(traineeUsername, firstTrainersList);
+
+        Trainee actual = dao.updateTraineeTrainersList(traineeUsername, secondTrainersList);
+
+        assertNotNull(actual);
+        assertEquals(1, actual.getTrainers().size());
+    }
+
+    @Test
+    @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testUpdateTraineeTrainersList_ShouldThrowExceptionWhenTraineeNotExists() {
+        String nonExistentTraineeUsername = "non.existent";
+        List<String> trainerUsernames = List.of("sarah.johnson");
+
+        TransactionHandlerException actualException = assertThrows(TransactionHandlerException.class,
+                () -> dao.updateTraineeTrainersList(nonExistentTraineeUsername, trainerUsernames)
+        );
+
+        assertEquals("Error performing Hibernate operation. Transaction is rolled back", actualException.getMessage());
+    }
+
     @Test
     @DataSet(value = "dataset/trainee-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testDeleteByUsername_ShouldReturnTrueWhenTraineeExists() {
@@ -289,5 +334,46 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
                 .dateOfBirth(dateOfBirth)
                 .address("123 Main St")
                 .build();
+    }
+
+    private List<Trainer> buildExpectedTrainers() {
+        TrainingType strength = TrainingType.builder()
+                .id(1L)
+                .trainingTypeName("Strength")
+                .build();
+        TrainingType yoga = TrainingType.builder()
+                .id(2L)
+                .trainingTypeName("Yoga")
+                .build();
+
+        User sarah = User.builder()
+                .id(1L)
+                .firstName("Sarah")
+                .lastName("Johnson")
+                .username("sarah.johnson")
+                .password("password456")
+                .isActive(true)
+                .build();
+        User mike = User.builder()
+                .id(2L)
+                .firstName("Mike")
+                .lastName("Wilson")
+                .username("mike.wilson")
+                .password("password789")
+                .isActive(false)
+                .build();
+
+        Trainer trainerSarah = Trainer.builder()
+                .id(1L)
+                .user(sarah)
+                .specialization(strength)
+                .build();
+        Trainer trainerMike = Trainer.builder()
+                .id(2L)
+                .user(mike)
+                .specialization(yoga)
+                .build();
+
+        return List.of(trainerMike, trainerSarah);
     }
 }

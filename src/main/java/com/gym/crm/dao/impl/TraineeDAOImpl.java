@@ -4,6 +4,7 @@ import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -85,6 +86,44 @@ public class TraineeDAOImpl implements TraineeDAO {
             Trainee updatedTrainee = entityManager.merge(trainee);
 
             log.info("Trainee updated with ID: {}", trainee.getId());
+
+            return updatedTrainee;
+        });
+    }
+
+    @Override
+    public Trainee updateTraineeTrainersList(String traineeUsername, List<String> trainerUsernames) {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
+            Trainee trainee;
+            try {
+                trainee = entityManager.createQuery(
+                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
+                        .setParameter("username", traineeUsername)
+                        .getSingleResult();
+            } catch (NoResultException e) {
+                throw new DaoException("Trainee not found with username: " + traineeUsername);
+            }
+
+            List<Trainer> newTrainers = trainerUsernames.stream()
+                    .map(username -> {
+                        try {
+                            return entityManager.createQuery(
+                                            "SELECT t FROM Trainer t WHERE t.user.username = :username", Trainer.class)
+                                    .setParameter("username", username)
+                                    .getSingleResult();
+                        } catch (NoResultException e) {
+                            throw new DaoException("Trainer not found with username: " + username);
+                        }
+                    })
+                    .toList();
+
+            trainee.getTrainers().clear();
+            trainee.getTrainers().addAll(newTrainers);
+
+            Trainee updatedTrainee = entityManager.merge(trainee);
+
+            log.info("Updated trainers list for trainee with username: {}. New trainers count: {}",
+                    traineeUsername, newTrainers.size());
 
             return updatedTrainee;
         });
