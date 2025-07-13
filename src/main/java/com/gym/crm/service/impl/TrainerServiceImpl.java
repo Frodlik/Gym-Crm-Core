@@ -174,10 +174,10 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + username));
 
-        boolean newStatus = !trainer.getUser().getIsActive();
+        boolean isActive = !trainer.getUser().getIsActive();
 
         User updatedUser = trainer.getUser().toBuilder()
-                .isActive(newStatus)
+                .isActive(isActive)
                 .build();
         Trainer updatedTrainer = trainer.toBuilder()
                 .user(updatedUser)
@@ -186,7 +186,7 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer savedTrainer = trainerDAO.update(updatedTrainer);
 
         logger.info("Successfully toggled activation for trainer with username: {} to {}",
-                username, newStatus ? "active" : "inactive");
+                username, isActive ? "active" : "inactive");
 
         return trainerMapper.toResponse(savedTrainer);
     }

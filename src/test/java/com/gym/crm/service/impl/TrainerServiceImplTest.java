@@ -257,8 +257,8 @@ class TrainerServiceImplTest {
                 .build();
         TrainerResponse expected = buildTrainerResponse();
         expected.setActive(false);
-
         ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
         when(trainerDAO.update(any(Trainer.class))).thenReturn(inactiveTrainer);
         when(trainerMapper.toResponse(inactiveTrainer)).thenReturn(expected);
@@ -267,7 +267,6 @@ class TrainerServiceImplTest {
 
         assertNotNull(actual);
         assertFalse(actual.isActive());
-
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toResponse(inactiveTrainer);
@@ -285,7 +284,6 @@ class TrainerServiceImplTest {
         Trainer inactiveTrainer = buildTrainer().toBuilder()
                 .user(inactiveUser)
                 .build();
-
         User activeUser = inactiveUser.toBuilder()
                 .isActive(true)
                 .build();
@@ -304,7 +302,6 @@ class TrainerServiceImplTest {
 
         assertNotNull(actual);
         assertTrue(actual.isActive());
-
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toResponse(activeTrainer);
@@ -325,7 +322,6 @@ class TrainerServiceImplTest {
                 createTrainerWithUsername("trainer2"),
                 createTrainerWithUsername("trainer3")
         );
-
         List<TrainerResponse> expectedResponses = List.of(
                 createTrainerResponse("trainer1", 1L),
                 createTrainerResponse("trainer2", 2L),
@@ -424,6 +420,7 @@ class TrainerServiceImplTest {
         response.setLastName("Name");
         response.setActive(true);
         response.setSpecialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
+
         return response;
     }
 }

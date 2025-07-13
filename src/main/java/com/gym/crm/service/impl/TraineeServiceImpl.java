@@ -10,7 +10,6 @@ import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.util.UserCredentialsGenerator;
@@ -137,12 +136,12 @@ public class TraineeServiceImpl implements TraineeService {
         traineeDAO.findByUsername(request.getTraineeUsername())
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + request.getTraineeUsername()));
 
-        for (String trainerUsername : request.getTrainerUsernames()) {
-            Optional<Trainer> trainer = trainerDAO.findByUsername(trainerUsername);
-            if (trainer.isEmpty()) {
-                throw new CoreServiceException("Trainer not found with username: " + trainerUsername);
-            }
-        }
+        request.getTrainerUsernames().stream()
+                .filter(trainerUsername -> trainerDAO.findByUsername(trainerUsername).isEmpty())
+                .findFirst()
+                .ifPresent(notFound -> {
+                    throw new CoreServiceException("Trainer not found with username: " + notFound);
+                });
 
         Trainee updatedTrainee = traineeDAO.updateTraineeTrainersList(
                 request.getTraineeUsername(),
@@ -196,10 +195,10 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + username));
 
-        boolean newStatus = !trainee.getUser().getIsActive();
+        boolean isActive = !trainee.getUser().getIsActive();
 
         User updatedUser = trainee.getUser().toBuilder()
-                .isActive(newStatus)
+                .isActive(isActive)
                 .build();
         Trainee updatedTrainee = trainee.toBuilder()
                 .user(updatedUser)
@@ -208,7 +207,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee savedTrainee = traineeDAO.update(updatedTrainee);
 
         logger.info("Successfully toggled activation for trainee with username: {} to {}",
-                username, newStatus ? "active" : "inactive");
+                username, isActive ? "active" : "inactive");
 
         return traineeMapper.toResponse(savedTrainee);
     }

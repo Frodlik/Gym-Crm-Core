@@ -138,6 +138,7 @@ public class GymTestObjects {
         TraineeTrainersUpdateRequest request = new TraineeTrainersUpdateRequest();
         request.setTraineeUsername(USERNAME);
         request.setTrainerUsernames(List.of(TRAINER_USERNAME, "trainer2.username"));
+
         return request;
     }
 }

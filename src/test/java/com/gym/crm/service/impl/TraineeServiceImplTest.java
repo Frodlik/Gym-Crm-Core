@@ -287,7 +287,6 @@ class TraineeServiceImplTest {
         Trainee inactiveTrainee = buildTrainee().toBuilder()
                 .user(inactiveUser)
                 .build();
-
         User activeUser = inactiveUser.toBuilder()
                 .isActive(true)
                 .build();
@@ -297,8 +296,8 @@ class TraineeServiceImplTest {
 
         TraineeResponse expected = buildTraineeResponse();
         expected.setActive(true);
-
         ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+
         when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
         when(traineeDAO.update(any(Trainee.class))).thenReturn(activeTrainee);
         when(traineeMapper.toResponse(activeTrainee)).thenReturn(expected);
@@ -307,7 +306,6 @@ class TraineeServiceImplTest {
 
         assertNotNull(actual);
         assertTrue(actual.isActive());
-
         verify(traineeDAO).findByUsername(USERNAME);
         verify(traineeDAO).update(any(Trainee.class));
         verify(traineeMapper).toResponse(activeTrainee);
@@ -361,7 +359,6 @@ class TraineeServiceImplTest {
                 () -> service.updateTraineeTrainersList(request));
 
         assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
-
         verify(traineeDAO).findByUsername(USERNAME);
         verify(trainerDAO, never()).findByUsername(any());
         verify(traineeDAO, never()).updateTraineeTrainersList(any(), any());
