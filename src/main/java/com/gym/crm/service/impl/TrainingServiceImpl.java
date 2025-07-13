@@ -11,6 +11,7 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.service.TrainingService;
+import com.gym.crm.service.transaction.PersistenceTx;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,7 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
+    @PersistenceTx
     public TrainingResponse create(@Valid TrainingCreateRequest request) {
         logger.debug("Creating training: traineeId={}, trainerId={}", request.getTraineeId(), request.getTrainerId());
 
@@ -84,6 +86,7 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
+    @PersistenceTx(readOnly = true)
     public List<TrainingResponse> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate,
                                                                 LocalDate toDate, String trainerName,
                                                                 String trainingType) {
@@ -109,6 +112,7 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
+    @PersistenceTx(readOnly = true)
     public List<TrainingResponse> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate,
                                                                 LocalDate toDate, String traineeName) {
         logger.debug("Getting trainer trainings by criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",

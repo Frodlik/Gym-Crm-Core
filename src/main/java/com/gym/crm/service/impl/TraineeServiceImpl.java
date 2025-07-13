@@ -12,6 +12,7 @@ import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
+import com.gym.crm.service.transaction.PersistenceTx;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -52,6 +53,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @PersistenceTx
     public TraineeResponse create(@Valid TraineeCreateRequest request) {
         logger.debug("Creating trainee: {} {}", request.getFirstName(), request.getLastName());
 
@@ -100,6 +102,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @PersistenceTx
     public TraineeResponse update(@Valid TraineeUpdateRequest request) {
         logger.debug("Updating trainee with ID: {}", request.getId());
 
@@ -130,6 +133,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @PersistenceTx
     public TraineeResponse updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequest request) {
         logger.debug("Updating trainers list for trainee with username: {}", request.getTraineeUsername());
 
@@ -154,6 +158,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @PersistenceTx
     public void deleteByUsername(String username) {
         logger.debug("Deleting trainee by username: {}", username);
 
@@ -189,6 +194,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @PersistenceTx
     public TraineeResponse toggleTraineeActivation(String username) {
         logger.debug("Toggling activation for trainee with username: {}", username);
 

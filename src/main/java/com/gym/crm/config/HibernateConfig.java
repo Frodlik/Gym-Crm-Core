@@ -6,11 +6,13 @@ import org.hibernate.cfg.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import javax.sql.DataSource;
 
 @org.springframework.context.annotation.Configuration
 @ComponentScan(basePackages = "com.gym.crm.model")
+@EnableAspectJAutoProxy
 public class HibernateConfig {
     @Value("${db.driver}")
     private String driverClassName;

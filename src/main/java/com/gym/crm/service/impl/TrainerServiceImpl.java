@@ -11,6 +11,7 @@ import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TrainerService;
+import com.gym.crm.service.transaction.PersistenceTx;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    @PersistenceTx
     public TrainerResponse create(@Valid TrainerCreateRequest request) {
         logger.debug("Creating trainer: {} {}", request.getFirstName(), request.getLastName());
 
@@ -116,6 +118,7 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    @PersistenceTx
     public TrainerResponse update(@Valid TrainerUpdateRequest request) {
         logger.debug("Updating trainer with ID: {}", request.getId());
 
@@ -168,6 +171,7 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    @PersistenceTx
     public TrainerResponse toggleTrainerActivation(String username) {
         logger.debug("Toggling activation for trainer with username: {}", username);
 
