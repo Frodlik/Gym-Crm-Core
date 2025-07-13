@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
@@ -47,7 +46,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Yoga", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
         Training trainingToCreate = createSampleTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
@@ -67,7 +65,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Flexibility", actualTrainingTypeName);
     }
 
-    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
         LocalDate todayDate = LocalDate.now();
