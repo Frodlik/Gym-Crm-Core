@@ -1,0 +1,241 @@
+openapi: 3.0.3
+info:
+  title: GCA API
+  description: API for managing trainees, trainers and trainings
+  version: '1.0'
+
+servers:
+  - url: http://localhost:8080/gym-crm-core/api/v1
+    description: Local server
+
+paths:
+  /trainees/register:
+    post:
+      summary: Register new trainee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraineeRegistrationRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraineeRegistrationResponse'
+
+  /trainees/{username}:
+    get:
+      summary: Get trainee profile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Trainee profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraineeProfile'
+    put:
+      summary: Update trainee profile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraineeProfileUpdate'
+      responses:
+        '204':
+          description: Profile updated
+    delete:
+      summary: Delete trainee and trainings
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '204':
+          description: Trainee deleted
+
+  /trainees/{username}/change-activation-status:
+    patch:
+      summary: Change activation status
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+      responses:
+        '204':
+          description: Status updated
+
+  /trainees/{username}/available-trainers:
+    get:
+      summary: Get trainers not assigned to trainee
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: List of available trainers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainerShort'
+
+  /trainees/{username}/trainers:
+    put:
+      summary: Update trainee's trainer list
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                trainerUsernames:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '204':
+          description: Trainers list updated
+
+  /trainees/{username}/trainings:
+    get:
+      summary: Get trainee trainings
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - in: query
+          name: periodFrom
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: periodTo
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: trainerName
+          schema:
+            type: string
+        - in: query
+          name: trainingType
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of trainings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainingShort'
+
+components:
+  parameters:
+    Username:
+      name: username
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    TraineeRegistrationRequest:
+      type: object
+      required: [firstName, lastName, dateOfBirth]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+
+    TraineeRegistrationResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    TraineeProfile:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        isActive:
+          type: boolean
+        trainers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainerShort'
+
+    TraineeProfileUpdate:
+      type: object
+      required: [firstName, lastName, dateOfBirth, address, isActive]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        isActive:
+          type: boolean
+
+    TrainerShort:
+      type: object
+      properties:
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        specialization:
+          type: string
+
+    TrainingShort:
+      type: object
+      properties:
+        trainingName:
+          type: string
+        trainingDate:
+          type: string
+          format: date
+        trainingType:
+          type: string
+        trainingDuration:
+          type: integer
+        trainerName:
+          type: string
+  

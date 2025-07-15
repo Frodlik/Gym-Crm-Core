@@ -49,16 +49,6 @@
             <version>3.1.0</version>
         </dependency>
         <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>6.6.8.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>4.24.0</version>
-        </dependency>
-        <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <version>${servlet.api.version}</version>
@@ -76,6 +66,21 @@
             <version>3.0.2</version>
         </dependency>
         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.6.8.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.24.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>2.2.32</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.18.3</version>
@@ -84,6 +89,11 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.18.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -267,6 +277,33 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.9.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <configHelp>false</configHelp>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <dateLibrary>java8</dateLibrary>
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/gca-api.yaml
+                            </inputSpec>
+                            <generatorName>spring</generatorName>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <apiPackage>com.gym.crm.openapi.api</apiPackage>
+                            <modelPackage>com.gym.crm.openapi.model</modelPackage>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
