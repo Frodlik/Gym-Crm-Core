@@ -66,14 +66,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TraineeGetResponse'
-        '404':
-          description: Trainee not found
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -114,14 +114,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Trainee not found
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -146,14 +146,14 @@ paths:
       responses:
         '200':
           description: Trainee profile deleted successfully
-        '404':
-          description: Trainee not found
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -191,14 +191,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Trainee not found
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -229,15 +229,15 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrainerGetResponse'
-        '404':
-          description: Trainee not found
+                  $ref: '#/components/schemas/AvailableTrainerGetResponse'
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -272,23 +272,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TrainerListUpdateResponse'
+                $ref: '#/components/schemas/TrainerListUpdateResponse'
         '400':
           description: Invalid input data or trainer not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Trainee not found
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -323,15 +321,15 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrainingGetResponse'
-        '404':
-          description: Trainee not found
+                  $ref: '#/components/schemas/TraineeTrainingGetResponse'
+        '401':
+          description: Unauthorized access
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized access
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -371,7 +369,7 @@ components:
     TrainerName:
       name: trainerName
       in: query
-      description: Filter by trainer's full name
+      description: Filter by trainer's first name
       required: false
       schema:
         type: string
@@ -441,21 +439,44 @@ components:
             isActive:
               type: boolean
               description: Indicates if the trainee is active
-              example: true
             trainers:
               type: array
               description: List of assigned trainers
               items:
-                $ref: '#/components/schemas/TrainerGetResponse'
-              example:
-                - username: "ricardo.milos"
-                  firstName: "Ricardo"
-                  lastName: "Milos"
-                  specialization: "Yoga"
-                - username: "eren.yeager"
-                  firstName: "Eren"
-                  lastName: "Yeager"
-                  specialization: "Cardio"
+                type: object
+                required:
+                  - username
+                  - firstName
+                  - lastName
+                  - specialization
+                properties:
+                  username:
+                    type: string
+                    description: Trainer's username
+                  firstName:
+                    type: string
+                    description: Trainer's first name
+                  lastName:
+                    type: string
+                    description: Trainer's last name
+                  specialization:
+                    type: string
+                    description: Trainer's specialization (training type)
+      example:
+        firstName: "Billy"
+        lastName: "Herrington"
+        dateOfBirth: "2000-03-22"
+        address: "123 Main St"
+        isActive: true
+        trainers:
+          - username: "ricardo.milos"
+            firstName: "Ricardo"
+            lastName: "Milos"
+            specialization: "Yoga"
+          - username: "eren.yeager"
+            firstName: "Eren"
+            lastName: "Yeager"
+            specialization: "Cardio"
     TraineeUpdateRequest:
       allOf:
         - $ref: '#/components/schemas/Trainee'
@@ -475,9 +496,40 @@ components:
         isActive: false
     TraineeUpdateResponse:
       allOf:
-        - $ref: '#/components/schemas/TraineeGetResponse'
+        - $ref: '#/components/schemas/Trainee'
         - type: object
+          properties:
+            username:
+              type: string
+              description: Trainee's username
+            isActive:
+              type: boolean
+              description: Indicates if the trainee is active
+            trainers:
+              type: array
+              description: List of assigned trainers
+              items:
+                type: object
+                required:
+                  - username
+                  - firstName
+                  - lastName
+                  - specialization
+                properties:
+                  username:
+                    type: string
+                    description: Trainer's username
+                  firstName:
+                    type: string
+                    description: Trainer's first name
+                  lastName:
+                    type: string
+                    description: Trainer's last name
+                  specialization:
+                    type: string
+                    description: Trainer's specialization (training type)
       example:
+        username: "jason.statham"
         firstName: "Jason"
         lastName: "Statham"
         dateOfBirth: "1967-07-26"
@@ -512,12 +564,40 @@ components:
           items:
             type: string
             pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
-          example: ["ricardo.milos"]
+          example: ["ricardo.milos", "eren.yeager"]
           minItems: 1
     TrainerListUpdateResponse:
-      allOf:
-        - $ref: '#/components/schemas/TrainerGetResponse'
-        - type: object
+      type: array
+      description: List of updated trainers
+      items:
+        type: object
+        required:
+          - username
+          - firstName
+          - lastName
+          - specialization
+        properties:
+          username:
+            type: string
+            description: Trainer's username
+          firstName:
+            type: string
+            description: Trainer's first name
+          lastName:
+            type: string
+            description: Trainer's last name
+          specialization:
+            type: string
+            description: Trainer's specialization
+      example:
+        - username: "ricardo.milos"
+          firstName: "Ricardo"
+          lastName: "Milos"
+          specialization: "Yoga"
+        - username: "eren.yeager"
+          firstName: "Eren"
+          lastName: "Yeager"
+          specialization: "Cardio"
     Trainer:
       allOf:
         - $ref: '#/components/schemas/User'
@@ -537,7 +617,7 @@ components:
               type: string
               description: Trainer's specialization (training type)
               example: "Yoga"
-    TrainerGetResponse:
+    AvailableTrainerGetResponse:
       allOf:
         - $ref: '#/components/schemas/Trainer'
         - type: object
@@ -547,8 +627,12 @@ components:
             username:
               type: string
               description: Trainer's username
-              example: "ricardo.milos"
-    TrainingGetResponse:
+      example:
+        username: "ricardo.milos"
+        firstName: "Ricardo"
+        lastName: "Milos"
+        specialization: "Yoga"
+    TraineeTrainingGetResponse:
       type: object
       required:
         - trainingName
@@ -592,7 +676,7 @@ components:
         errorMessage:
           type: string
           description: Human-readable description of the error
-          example: "Validation error: firstName must not be empty"
+          example: "An error occurred while processing the request: error message"
 
   securitySchemes:
     basicAuth:
