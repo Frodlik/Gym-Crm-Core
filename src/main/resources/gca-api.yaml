@@ -265,14 +265,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrainerListUpdateRequest'
+              $ref: '#/components/schemas/TraineeAssignedTrainersUpdateRequest'
       responses:
         '200':
           description: Trainers list updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainerListUpdateResponse'
+                $ref: '#/components/schemas/TraineeAssignedTrainersUpdateResponse'
         '400':
           description: Invalid input data or trainer not found
           content:
@@ -553,7 +553,7 @@ components:
           type: boolean
           description: New activation status
           example: true
-    TrainerListUpdateRequest:
+    TraineeAssignedTrainersUpdateRequest:
       type: object
       required:
         - trainerUsernames
@@ -566,7 +566,7 @@ components:
             pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
           example: ["ricardo.milos", "eren.yeager"]
           minItems: 1
-    TrainerListUpdateResponse:
+    TraineeAssignedTrainersUpdateResponse:
       type: array
       description: List of updated trainers
       items:
