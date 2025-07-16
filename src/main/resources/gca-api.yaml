@@ -12,7 +12,7 @@ paths:
   /trainees/register:
     post:
       tags:
-        - Trainee Registration
+        - Trainee
       summary: Register new trainee
       description: Registers a new trainee with basic information and generates username/password
       operationId: registerTrainee
@@ -29,12 +29,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TraineeCreateResponse'
-              examples:
-                example1:
-                  summary: Successful registration
-                  value:
-                    username: "john.doe"
-                    password: "secure-password"
         '400':
           description: Invalid input data
           content:
@@ -47,12 +41,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
   /trainees/{username}:
     get:
       tags:
-        - Trainee Profile
+        - Trainee
       summary: Get trainee profile
       description: Retrieves detailed information about a trainee including assigned trainers
       operationId: getTraineeProfile
@@ -64,7 +65,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TraineeResponse'
+                $ref: '#/components/schemas/TraineeGetResponse'
         '404':
           description: Trainee not found
           content:
@@ -77,11 +78,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
     put:
       tags:
-        - Trainee Profile
+        - Trainee
       summary: Update trainee profile
       description: Updates trainee's personal information and activation status
       operationId: updateTraineeProfile
@@ -93,22 +101,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TraineeUpdateRequest'
-            examples:
-              example1:
-                summary: Update trainee information
-                value:
-                  firstName: "John"
-                  lastName: "Doe"
-                  dateOfBirth: "2000-01-01"
-                  address: "123 New Address"
-                  isActive: true
       responses:
         '200':
           description: Profile updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Trainee'
+                $ref: '#/components/schemas/TraineeUpdateResponse'
         '400':
           description: Invalid input data
           content:
@@ -127,11 +126,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
     delete:
       tags:
-        - Trainee Profile
+        - Trainee
       summary: Delete trainee profile
       description: Hard delete trainee profile with cascade deletion of related trainings
       operationId: deleteTraineeProfile
@@ -152,12 +158,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
   /trainees/{username}/change-activation-status:
     patch:
       tags:
-        - Trainee Profile
+        - Authentication
       summary: Change trainee activation status
       description: Activates or deactivates a trainee profile
       operationId: changeTraineeActivationStatus
@@ -169,15 +182,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ActivationStatusRequest'
-            examples:
-              activate:
-                summary: Activate trainee
-                value:
-                  isActive: true
-              deactivate:
-                summary: Deactivate trainee
-                value:
-                  isActive: false
       responses:
         '200':
           description: Activation status updated successfully
@@ -199,12 +203,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
   /trainees/{username}/available-trainers:
     get:
       tags:
-        - Trainee Trainers
+        - Assignment
       summary: Get available trainers
       description: Retrieves list of active trainers not yet assigned to the trainee
       operationId: getAvailableTrainers
@@ -218,19 +229,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrainerResponse'
-              examples:
-                example1:
-                  summary: Available trainers list
-                  value:
-                    - username: "trainer1"
-                      firstName: "Alice"
-                      lastName: "Smith"
-                      specialization: "Yoga"
-                    - username: "trainer2"
-                      firstName: "Bob"
-                      lastName: "Johnson"
-                      specialization: "Cardio"
+                  $ref: '#/components/schemas/TrainerGetResponse'
         '404':
           description: Trainee not found
           content:
@@ -243,12 +242,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
   /trainees/{username}/trainers:
     put:
       tags:
-        - Trainee Trainers
+        - Assignment
       summary: Update trainee's trainer list
       description: Updates the list of trainers assigned to a trainee
       operationId: updateTraineeTrainers
@@ -260,11 +266,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TrainerListUpdateRequest'
-            examples:
-              example1:
-                summary: Assign trainers to trainee
-                value:
-                  trainerUsernames: ["trainer1", "trainer2"]
       responses:
         '200':
           description: Trainers list updated successfully
@@ -273,7 +274,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrainerResponse'
+                  $ref: '#/components/schemas/TrainerListUpdateResponse'
         '400':
           description: Invalid input data or trainer not found
           content:
@@ -292,12 +293,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         default:
           description: Unexpected error
+
   /trainees/{username}/trainings:
     get:
       tags:
-        - Trainee Trainings
+        - Training
       summary: Get trainee's training schedule
       description: Retrieves trainee's training schedule with optional filtering
       operationId: getTraineeTrainings
@@ -315,21 +323,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrainingResponse'
-              examples:
-                example1:
-                  summary: Trainee's training schedule
-                  value:
-                    - trainingName: "Strength Training"
-                      trainingDate: "2025-07-01"
-                      trainingType: "Cardio"
-                      trainingDuration: 60
-                      trainerName: "Alice Smith"
-                    - trainingName: "Yoga Session"
-                      trainingDate: "2025-07-02"
-                      trainingType: "Yoga"
-                      trainingDuration: 90
-                      trainerName: "Alice Smith"
+                  $ref: '#/components/schemas/TrainingGetResponse'
         '404':
           description: Trainee not found
           content:
@@ -355,7 +349,7 @@ components:
       schema:
         type: string
         pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
-        example: "john.doe"
+        example: "billy.herrington"
     FromDate:
       name: fromDate
       in: query
@@ -364,7 +358,7 @@ components:
       schema:
         type: string
         format: date
-      example: "2025-07-01"
+        example: "2025-07-14"
     ToDate:
       name: toDate
       in: query
@@ -373,7 +367,7 @@ components:
       schema:
         type: string
         format: date
-      example: "2025-07-31"
+        example: "2025-07-31"
     TrainerName:
       name: trainerName
       in: query
@@ -381,7 +375,7 @@ components:
       required: false
       schema:
         type: string
-      example: "Alice Smith"
+        example: "Eren"
     TrainingType:
       name: trainingType
       in: query
@@ -389,7 +383,7 @@ components:
       required: false
       schema:
         type: string
-      example: "Cardio"
+        example: "Cardio"
 
   schemas:
     User:
@@ -402,12 +396,12 @@ components:
           type: string
           description: First name
           maxLength: 50
-          example: "John"
+          example: "Billy"
         lastName:
           type: string
           description: Last name
           maxLength: 50
-          example: "Doe"
+          example: "Herrington"
     Trainee:
       allOf:
         - $ref: '#/components/schemas/User'
@@ -417,7 +411,7 @@ components:
               type: string
               format: date
               description: "Date of birth (format: yyyy-MM-dd)"
-              example: "2000-01-01"
+              example: "2000-03-22"
             address:
               type: string
               description: Contact address
@@ -434,36 +428,70 @@ components:
         username:
           type: string
           description: Generated unique username
-          example: "john.doe.2025"
+          example: "billy.herrington"
         password:
           type: string
           description: Generated secure password
           example: "secure-password"
-    TraineeResponse:
+    TraineeGetResponse:
       allOf:
         - $ref: '#/components/schemas/Trainee'
         - type: object
-      properties:
-        isActive:
-          type: boolean
-          description: Indicates if the trainee is active
-          example: true
-        trainers:
-          type: array
-          description: List of assigned trainers
-          items:
-            $ref: '#/components/schemas/TrainerResponse'
+          properties:
+            isActive:
+              type: boolean
+              description: Indicates if the trainee is active
+              example: true
+            trainers:
+              type: array
+              description: List of assigned trainers
+              items:
+                $ref: '#/components/schemas/TrainerGetResponse'
+              example:
+                - username: "ricardo.milos"
+                  firstName: "Ricardo"
+                  lastName: "Milos"
+                  specialization: "Yoga"
+                - username: "eren.yeager"
+                  firstName: "Eren"
+                  lastName: "Yeager"
+                  specialization: "Cardio"
     TraineeUpdateRequest:
       allOf:
         - $ref: '#/components/schemas/Trainee'
         - type: object
-      required:
-        - isActive
-      properties:
-        isActive:
-          type: boolean
-          description: Indicates if the trainee is active
-          example: true
+          required:
+            - isActive
+          properties:
+            isActive:
+              type: boolean
+              description: Indicates if the trainee is active
+              example: false
+      example:
+        firstName: "Jason"
+        lastName: "Statham"
+        dateOfBirth: "1967-07-26"
+        address: "456 Action Ave, London"
+        isActive: false
+    TraineeUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/TraineeGetResponse'
+        - type: object
+      example:
+        firstName: "Jason"
+        lastName: "Statham"
+        dateOfBirth: "1967-07-26"
+        address: "456 Action Ave, London"
+        isActive: false
+        trainers:
+          - username: "ricardo.milos"
+            firstName: "Ricardo"
+            lastName: "Milos"
+            specialization: "Yoga"
+          - username: "eren.yeager"
+            firstName: "Eren"
+            lastName: "Yeager"
+            specialization: "Cardio"
     ActivationStatusRequest:
       type: object
       required:
@@ -484,39 +512,43 @@ components:
           items:
             type: string
             pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
-          example: ["trainer1", "trainer2"]
+          example: ["ricardo.milos"]
           minItems: 1
+    TrainerListUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/TrainerGetResponse'
+        - type: object
     Trainer:
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object
-      required:
-        - specialization
-      properties:
-        firstName:
-          type: string
-          description: Trainer's first name
-          example: "Alice"
-        lastName:
-          type: string
-          description: Trainer's last name
-          example: "Smith"
-        specialization:
-          type: string
-          description: Trainer's specialization (training type)
-          example: "Yoga"
-    TrainerResponse:
+          required:
+            - specialization
+          properties:
+            firstName:
+              type: string
+              description: Trainer's first name
+              example: "Ricardo"
+            lastName:
+              type: string
+              description: Trainer's last name
+              example: "Milos"
+            specialization:
+              type: string
+              description: Trainer's specialization (training type)
+              example: "Yoga"
+    TrainerGetResponse:
       allOf:
         - $ref: '#/components/schemas/Trainer'
         - type: object
-      required:
-        - username
-      properties:
-        username:
-          type: string
-          description: Trainer's username
-          example: trainer1
-    TrainingResponse:
+          required:
+            - username
+          properties:
+            username:
+              type: string
+              description: Trainer's username
+              example: "ricardo.milos"
+    TrainingGetResponse:
       type: object
       required:
         - trainingName
@@ -546,30 +578,21 @@ components:
         trainerName:
           type: string
           description: Name of the trainer
-          example: "Alice Smith"
+          example: "Eren"
     ErrorResponse:
       type: object
       required:
-        - message
-        - timestamp
+        - errorCode
+        - errorMessage
       properties:
-        message:
+        errorCode:
+          type: integer
+          description: Unique identifier for the error type
+          example: 2760
+        errorMessage:
           type: string
-          description: Error message
-          example: "Trainee not found"
-        timestamp:
-          type: string
-          format: date-time
-          description: Error timestamp
-          example: "2025-07-15T10:30:00Z"
-        details:
-          type: string
-          description: Additional error details
-          example: "No trainee found with username: john.doe"
-        transactionId:
-          type: string
-          description: Transaction ID for tracking
-          example: "txn-123456789"
+          description: Human-readable description of the error
+          example: "Validation error: firstName must not be empty"
 
   securitySchemes:
     basicAuth:
