@@ -337,12 +337,361 @@ paths:
         default:
           description: Unexpected error
 
+  /trainers/register:
+    post:
+      tags:
+        - Trainer
+      summary: Register new trainer
+      description: Registers a new trainer with basic information and generates username/password
+      operationId: registerTrainer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerCreateRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainerCreateResponse'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /trainers/{username}:
+    get:
+      tags:
+        - Trainer
+      summary: Get trainer profile
+      description: Retrieves detailed information about a trainer including assigned trainees
+      operationId: getTrainerProfile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Trainer profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainerGetResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+    put:
+      tags:
+        - Trainer
+      summary: Update trainer profile
+      description: Updates trainer's personal information and activation status
+      operationId: updateTrainerProfile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerUpdateRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainerUpdateResponse'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /trainers/{username}/change-activation-status:
+    patch:
+      tags:
+        - Authentication
+      summary: Change trainer activation status
+      description: Activates or deactivates a trainer profile
+      operationId: changeTrainerActivationStatus
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationStatusRequest'
+      responses:
+        '200':
+          description: Activation status updated successfully
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /trainers/{username}/trainings:
+    get:
+      tags:
+        - Training
+      summary: Get trainer's training schedule
+      description: Retrieves trainer's training schedule with optional filtering
+      operationId: getTrainerTrainings
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+        - $ref: '#/components/parameters/TraineeName'
+      responses:
+        '200':
+          description: List of trainings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainerTrainingGetResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /trainings:
+    post:
+      tags:
+        - Training
+      summary: Add new training
+      description: Creates a new training session between trainee and trainer
+      operationId: addTraining
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingCreateRequest'
+      responses:
+        '200':
+          description: Training created successfully
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainee or trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /training-types:
+    get:
+      tags:
+        - Taxonomy
+      summary: Get training types
+      description: Retrieves list of all available training types
+      operationId: getTrainingTypes
+      responses:
+        '200':
+          description: List of training types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainingTypeGetResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticates user with username and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /change-password:
+    put:
+      tags:
+        - Authentication
+      summary: Change user password
+      description: Changes user password with old password verification
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid old password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
 components:
   parameters:
     Username:
       name: username
       in: path
-      description: The username of the trainee
+      description: The username of the user
       required: true
       schema:
         type: string
@@ -374,6 +723,14 @@ components:
       schema:
         type: string
         example: "Eren"
+    TraineeName:
+      name: traineeName
+      in: query
+      description: Filter by trainee's first name
+      required: false
+      schema:
+        type: string
+        example: "Billy"
     TrainingType:
       name: trainingType
       in: query
@@ -617,6 +974,119 @@ components:
               type: string
               description: Trainer's specialization (training type)
               example: "Yoga"
+    TrainerCreateRequest:
+      $ref: '#/components/schemas/Trainer'
+    TrainerCreateResponse:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Generated unique username
+          example: "ricardo.milos"
+        password:
+          type: string
+          description: Generated secure password
+          example: "secure-password"
+    TrainerGetResponse:
+      allOf:
+        - $ref: '#/components/schemas/Trainer'
+        - type: object
+          properties:
+            isActive:
+              type: boolean
+              description: Indicates if the trainer is active
+            trainees:
+              type: array
+              description: List of assigned trainees
+              items:
+                type: object
+                required:
+                  - username
+                  - firstName
+                  - lastName
+                properties:
+                  username:
+                    type: string
+                    description: Trainee's username
+                  firstName:
+                    type: string
+                    description: Trainee's first name
+                  lastName:
+                    type: string
+                    description: Trainee's last name
+      example:
+        firstName: "Ricardo"
+        lastName: "Milos"
+        specialization: "Yoga"
+        isActive: true
+        trainees:
+          - username: "billy.herrington"
+            firstName: "Billy"
+            lastName: "Herrington"
+          - username: "senku.ishigami"
+            firstName: "Senku"
+            lastName: "Ishigami"
+    TrainerUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/Trainer'
+        - type: object
+          required:
+            - isActive
+          properties:
+            isActive:
+              type: boolean
+              description: Indicates if the trainer is active
+      example:
+        firstName: "Rudeus"
+        lastName: "Greyrat"
+        specialization: "Yoga"
+        isActive: false
+    TrainerUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/Trainer'
+        - type: object
+          properties:
+            username:
+              type: string
+              description: Trainer's username
+            isActive:
+              type: boolean
+              description: Indicates if the trainer is active
+            trainees:
+              type: array
+              description: List of assigned trainees
+              items:
+                type: object
+                required:
+                  - username
+                  - firstName
+                  - lastName
+                properties:
+                  username:
+                    type: string
+                    description: Trainee's username
+                  firstName:
+                    type: string
+                    description: Trainee's first name
+                  lastName:
+                    type: string
+                    description: Trainee's last name
+      example:
+        username: "rudeus.greyrat"
+        firstName: "Rudeus"
+        lastName: "Greyrat"
+        specialization: "Yoga"
+        isActive: false
+        trainees:
+          - username: "billy.herrington"
+            firstName: "Billy"
+            lastName: "Herrington"
+          - username: "senku.ishigami"
+            firstName: "Senku"
+            lastName: "Ishigami"
     AvailableTrainerGetResponse:
       allOf:
         - $ref: '#/components/schemas/Trainer'
@@ -632,6 +1102,39 @@ components:
         firstName: "Ricardo"
         lastName: "Milos"
         specialization: "Yoga"
+    TrainingCreateRequest:
+      type: object
+      required:
+        - traineeUsername
+        - trainerUsername
+        - trainingName
+        - trainingDate
+        - trainingDuration
+      properties:
+        traineeUsername:
+          type: string
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          description: Username of the trainee
+          example: "billy.herrington"
+        trainerUsername:
+          type: string
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          description: Username of the trainer
+          example: "ricardo.milos"
+        trainingName:
+          type: string
+          description: Name of the training session
+          example: "Strength Training"
+        trainingDate:
+          type: string
+          format: date
+          description: Date of the training session
+          example: "2025-07-14"
+        trainingDuration:
+          type: integer
+          description: Duration of training in minutes
+          minimum: 1
+          example: 60
     TraineeTrainingGetResponse:
       type: object
       required:
@@ -663,6 +1166,84 @@ components:
           type: string
           description: Name of the trainer
           example: "Eren"
+    TrainerTrainingGetResponse:
+      type: object
+      required:
+        - trainingName
+        - trainingDate
+        - trainingType
+        - trainingDuration
+        - traineeName
+      properties:
+        trainingName:
+          type: string
+          description: Name of the training session
+          example: "Strength Training"
+        trainingDate:
+          type: string
+          format: date
+          description: Date of the training session
+          example: "2025-07-01"
+        trainingType:
+          type: string
+          description: Type of training
+          example: "Cardio"
+        trainingDuration:
+          type: integer
+          description: Duration of training in minutes
+          minimum: 1
+          example: 60
+        traineeName:
+          type: string
+          description: Name of the trainee
+          example: "Billy"
+    TrainingTypeGetResponse:
+      type: object
+      required:
+        - trainingType
+        - trainingTypeId
+      properties:
+        trainingType:
+          type: string
+          description: Name of the training type
+          example: "Cardio"
+        trainingTypeId:
+          type: integer
+          description: ID of the training type
+          example: 1
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          description: Username for login
+          example: "billy.herrington"
+        password:
+          type: string
+          minLength: 10
+          description: User password
+          example: "secure-password"
+    ChangePasswordRequest:
+      type: object
+      required:
+        - username
+        - oldPassword
+        - newPassword
+      properties:
+        username:
+          type: string
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          example: "billy.herrington"
+        oldPassword:
+          type: string
+          example: "old-password"
+        newPassword:
+          type: string
+          example: "new-password"
     ErrorResponse:
       type: object
       required:
